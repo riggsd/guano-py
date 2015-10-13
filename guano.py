@@ -6,6 +6,10 @@ GUANO is the "Grand Unified Acoustic Notation Ontology", an extensible metadata 
 for representing bat acoustics data.
 """
 
+
+__version__ = '0.0.1'
+
+
 import os
 import sys
 import mmap

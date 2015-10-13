@@ -1,0 +1,3 @@
+include README.md
+include LICENSE.txt
+include doc/guano_specification.md

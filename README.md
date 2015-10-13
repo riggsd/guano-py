@@ -14,6 +14,21 @@ Requirements
 - Python 2.7
 
 
+Installation
+============
+
+Download and install magically from the Python Package Index::
+
+    $> pip install -U guano
+
+
+Check out the project from GitHub and install locally in developer mode to hack on it yourself::
+
+    $> git clone https://github.com/riggsd/guano-py.git
+    $> cd guano-py
+    $> python setup.py develop
+
+
 Usage
 =====
 
