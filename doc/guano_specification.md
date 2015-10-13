@@ -26,6 +26,18 @@ manufacturers are invited to explore the application of GUANO metadata to those
 file formats; but this specification concentrates only on the standard .WAV.
 
 
+Status
+------
+
+This format and specification are in the early pre-implementation stage. No
+bat detector manufacturer currently writes GUANO metadata; and with the
+exception of this reference implementation, no software ecosystem currently
+supports reading or editing GUANO metadata.
+
+GUANO will be considered at the "Version 1.0" stage when the first conforming
+implementation hardware is released publically.
+
+
 Definitions and Common Data Conventions
 ---------------------------------------
 
@@ -46,14 +58,15 @@ That's right, all data must be written as UTF-8 string. GUANO does not allow
 a binary representation for floating point data (eg. IEEE 754), but rather
 requires the base10 string literal representation.
 
-Newlines must be specified with the \n linefeed (UTF-8 and ASCII 0x0A)
+Newlines must be specified with the '\n' linefeed (UTF-8 and ASCII 0x0A)
 character only.
 
-Values which need to encode a literal newline should write the string '\n'.
-Correspondingly, software which reads fields that support multi-line string
-values should interpret the literal string '\n' as a newline. This
-specification makes no attempt to define an escape to encode the literal
-string '\n' with a meaning apart from "newline"; deal with it.
+Values which need to encode a literal newline should write the two-byte string
+"\n" (UTF-8 and ASCII 0x5C, 0x6E). Correspondingly, software which reads
+fields that support multi-line string values should interpret the literal
+string "\n" as a newline. At this time, this specification makes no attempt
+to define an escape for encoding the literal string "\n" with a meaning apart
+from "newline".
 
 Extra whitespace may be used when formatting field names and values; whitespace
 should be trimmed upon reading. This gives writing implementations freedom to
@@ -66,11 +79,41 @@ byte boundaries, implementations should pad the GUANO metadata sub-chunk with
 whitespace to an even number of bytes.
 
 Reading implementations should ignore all metadata fields which they do not
-recognize (for example, new fields from later metadata specification versions
+recognize (for example, new fields from later metadata specification versions,
 or namespaced manufacturer-specific fields). Editing implementations should
-persist all unknown metadata fields.
+persist all unknown metadata fields exactly as read.
 
-TODO: Explain dates, times, datetimes, time zones (ISO 8601)
+Dates, times, and datetimes must appear in one of the following formats, which
+are subsets of the ISO 8601 and RFC 3331 specifications.
+
+**Date**
+
+* 2015-12-31
+
+**Time**
+
+* 23:59
+* 23:59:59
+* 23:59:59.123
+* 23:59:59.123456
+
+**Local DateTime**
+
+* 2015-12-31T23:59:59
+* 2015-12-31T23:59:59.123
+* 2015-12-31T23:59:59.123456
+
+**UTC DateTime**
+
+* 2015-12-31T23:59:59Z
+* 2015-12-31T23:59:59.123Z
+* 2015-12-31T23:59:59.123456Z
+
+**UTC Relative DateTime***
+
+* 2015-12-31T23:59:59+04:00
+* 2015-12-31T23:59:59.123+04:00
+* 2015-12-31T23:59:59.123456+04:00
 
 
 Embedding in WAVE Files
@@ -93,15 +136,28 @@ conform to the RIFF format and jump sub-chunk to sub-chunk if necessary.
 Metadata Format
 ---------------
 
-Namespaces are separated from field keys by the first occurrence of the '|' pipe character, UTF-8 and ASCII ``0x7C``. Namespaces may not include a '|' character (obviously) or a ':' character.
+Namespaces are separated from field keys by the first occurrence of the '|'
+pipe character, UTF-8 and ASCII ``0x7C``. Namespaces may not include a '|'
+character (obviously) or a ':' character.
 
-Field keys are separated from field values by the first occurrence of the ':' colon character, UTF-8 and ASCII ``0x3A``. Keys may not contain a ':' character (obviously).
+Field keys are separated from field values by the first occurrence of the ':'
+colon character, UTF-8 and ASCII ``0x3A``. Keys may not contain a ':'
+character (obviously). Keys may contain a '|' character so that vendors may
+namespace their own vendor-specific fields; for example,
+`PET|D500X|TSens: high` could be a value which applies to Pettersson's D500X
+but not to their other products.
 
-Field values consist of everything after the first ':' character, until the next '\n' newline (or EOF), and after having all surrounding whitespace trimmed. Whitespace is not exhaustively defined here, but should include the non-printing ASCII bytes including null, CR, LF, space, tab, etc.
+Field values consist of everything after the first ':' character, until the
+next '\n' newline (or EOF), and after having all surrounding whitespace
+trimmed. Whitespace is not exhaustively defined here, but should include the
+non-printing ASCII bytes including null, CR, LF, space, tab, etc.
 
-Empty lines are ignored. In fact, the examples in this document use extra empty lines for logical organization of fields, though this is absolutely not a requirement for writing implementations.
+Empty lines are ignored. In fact, the examples in this document use extra
+empty lines for legibility, though this is absolutely not a requirement for
+writing implementations.
 
-Field keys may occur in any order. Keys may not be duplicated, however!
+Field keys may occur in any order. However, keys may not be duplicated within
+a single file!
 
 
 Extensible Namespaces
@@ -139,7 +195,7 @@ this list so that it isn't accidentally used by another manufacturer.
 **SB**
   SonoBat
 
-**TIT**
+**Anabat**
   Titley Scientific
 
 **WAC**

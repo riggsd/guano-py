@@ -18,17 +18,28 @@ from contextlib import closing
 from tempfile import NamedTemporaryFile
 
 
+WHITESPACE = ' \t\n\x0b\x0c\r\0'
+
+
 def parse_timestamp(s):
     """Parse a string in supported subset of ISO 8601 / RFC 3331 format to tz-naive local `datetime`"""
-    s = s.replace('T', ' ')  # depart from standard and use space rather than 'T' separator
+    s = s.replace(' ', 'T', 1)  # support using space rather than 'T' date/time delimiter
     if s[-1] == 'Z':  # time in UTC "zulu"
-        # TODO: convert UTC to local? (no guarantee that our local was local at recording time)
-        return datetime.strptime(s[:-1], '%Y-%m-%d %H:%M:%S')
+        # TODO: convert UTC to local? (no guarantee that our "local" was local at recording time)
+        return datetime.strptime(s[:-1], '%Y-%m-%dT%H:%M:%S')
     elif len(s) in (22, 25):  # UTC offset provided
         s, offset = s[:19], s[19:]
-        return datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
+        return datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
+    elif len(s) == 26:  # milliseconds included
+        return datetime.strptime(s, '%Y-%m-%dT%H:%M:%S.%f')
     else:
-        return datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
+        return datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
+
+
+def serialize_timestamp(timestamp):
+    if timestamp.microsecond:
+        return timestamp.strftime('%Y-%m-%dT%H:%M:%S.%f')
+    return timestamp.strftime('%Y-%m-%dT%H:%M:%S')
 
 
 class GuanoFile(object):
@@ -63,6 +74,7 @@ class GuanoFile(object):
     }
     _serialization_rules = {
         'Loc Position': lambda value: '%f %f' % value,
+        'Timestamp': serialize_timestamp,
     }
 
     def __init__(self, filename):
@@ -122,7 +134,7 @@ class GuanoFile(object):
 
                 # split out our metadata keys
                 for line in metadata_buf.split('\n'):
-                    line = line.strip()
+                    line = line.strip(WHITESPACE)
                     if not line:
                         continue
                     full_key, val = line.split(':', 1)
@@ -232,6 +244,8 @@ if __name__ == '__main__':
 
     # the following is an example of how to register a few namespaced keys with data type coercion
     GuanoFile.register('SB', ['DiscrProb', 'Version'], float)
+    GuanoFile.register('Anabat', ['Humidity', 'Temperature'], float)
+    GuanoFile.register('Anabat', 'Start', parse_timestamp, serialize_timestamp)
 
     for fname in sys.argv[1:]:
         print '\n' + fname
