@@ -116,33 +116,33 @@ registered in this document so that they are not inadvertently reused, but
 manufacturers are free to use as many or as few custom fields as they like
 (it's your namespace!).
 
-Reserved Namespaces
-~~~~~~~~~~~~~~~~~~~
+
+### Reserved Namespaces ###
 
 The following namespaces have been reserved or registered. Any manufacturer who
 utilizes their own custom GUANO fields is encouraged to add their namespace to
 this list so that it isn't accidentally used by another manufacturer.
 
-GUANO
+**GUANO**
   This reserved namespace is for meta-metadata pertaining specifically to the
   GUANO metadata in use.
 
-BAT
+**BAT**
   Binary Acoustic Technologies
 
-MSFT
+**MSFT**
   Myotisoft
 
-PET
+**PET**
   Pettersson
 
-SB
+**SB**
   SonoBat
 
-TIT
+**TIT**
   Titley Scientific
 
-WAC
+**WAC**
   Wildlife Acoustics
 
 
@@ -153,83 +153,83 @@ The following example is the embedded GUANO metadata for a direct-recorded
 (no time-expansion) full-spectrum recording made with a Pettersson D1000X,
 then auto-classified with SonoBat, and subsequently manually vetted::
 
+    GUANO|Version:  1.0
+    
+    Timestamp:  2012-03-29T03:58:01+04:00
+    Species Auto ID:  MYLU
+    Species Manual ID:  Myosod
+    Tags:  hand-release, voucher, workshop
+    Note:  Hand release of male Indiana Bat caught in triple-high net at Mammoth Cave Historic Ent.\nReleased in low-clutter 100m diameter clearing, bat flew directly overhead, circled once, then darted off into cluttered forest.\n\nRecorded by David Riggs with Pettersson D1000X at 2014 BCM acoustic workshop.
+    TE:  1
+    Samplerate:  500000
+    Length:  6.5
+    Filter HP:  20.0
+    Make:  Pettersson
+    Model:  D1000X
+    Loc Position:  37.1878016 -86.1057312
+    Loc Accuracy:  20
+    Loc Elevation:  228.6
+    
+    SB|Version:  3.4
+    SB|Classifier:  US Northeast
+    SB|DiscrProb:  0.913
+    SB|Filter:  20kHz Anti-Katydid
+    
+    PET|Gain:  80
+    PET|Firmware:  1.0.4 (2009-11-25)
 
-  GUANO|Version:  1.0
-  
-  Timestamp:  2012-03-29T03:58:01+04:00
-  Species Auto ID:  MYLU
-  Species Manual ID:  Myosod
-  Tags:  hand-release, voucher, workshop
-  Note:  Hand release of male Indiana Bat caught in triple-high net at Mammoth Cave Historic Ent.\nReleased in low-clutter 100m diameter clearing, bat flew directly overhead, circled once, then darted off into cluttered forest.\n\nRecorded by David Riggs with Pettersson D1000X at 2014 BCM acoustic workshop.
-  TE:  1
-  Samplerate:  500000
-  Length:  6.5
-  Filter HP:  20.0
-  Make:  Pettersson
-  Model:  D1000X
-  Loc Position:  37.1878016 -86.1057312
-  Loc Accuracy:  20
-  Loc Elevation:  228.6
-  
-  SB|Version:  3.4
-  SB|Classifier:  US Northeast
-  SB|DiscrProb:  0.913
-  SB|Filter:  20kHz Anti-Katydid
-  
-  PET|Gain:  80
-  PET|Firmware:  1.0.4 (2009-11-25)
 
 
 Defined Fields
 --------------
 
-GUANO|Version
-  required, float. GUANO metadata version in use. This specification defines version '1.0'.
+**GUANO|Version**
+  required, float. GUANO metadata version in use. This specification defines version `1.0`.
 
-GUANO|Size
-  optional, integer. Total size, in bytes, of pre-allocated GUANO metadata space. Pre-allocating whitespace within the 'guan' subchunk allows for writing/editing metadata without re-writing the entirety of the file back to disk. This field should only be used if pre-allocating space, so that writing (editing) implementations may check to see if their changes overflow the bounds of pre-allocated metadata space.
+**GUANO|Size**
+  optional, integer. Total size, in bytes, of pre-allocated GUANO metadata space. Pre-allocating whitespace within the `guan` subchunk allows for writing/editing metadata without re-writing the entirety of the file back to disk. This field should only be used if pre-allocating space, so that writing (editing) implementations may check to see if their changes overflow the bounds of pre-allocated metadata space.
 
-Filter HP
+**Filter HP**
   optional, float. High-pass filter frequency, in kHz.
 
-Filter LP
+**Filter LP**
   optional, float. Low-pass filter frequency, in kHz.
 
-Length
+**Length**
   optional, float. Recording length, in seconds. This should be the "actual length", which will be identical to the .WAV length for direct-recorded files, but will be calculated for time-expanded recordings (.WAV length divided by TE factor).
 
-Loc Accuracy
+**Loc Accuracy**
   optional, float. Location accuracy, in meters.
 
-Loc Elevation
+**Loc Elevation**
   optional, float. Elevation / altitude above mean sea level, in meters.
 
-Loc Position
+**Loc Position**
   optional, (float float). Location that the recording was made, as a WGS84 latitude longitude tuple.
 
-Make
+**Make**
   optional, string. Manufacturer of the recording hardware.
 
-Model
+**Model**
   optional, string. Model name or number of the recording hardware.
 
-Note
+**Note**
   optional, multiline string. Freeform textual note associated with the recording.
 
-Samplerate
+**Samplerate**
   optional, integer. Recording samplerate, in Hz.
 
-Species Auto ID
+**Species Auto ID**
   optional, string. Species or guild classification, as determined by automated classification.
 
-Species Manual ID
+**Species Manual ID**
   optional, string. Species or guild classification, as determined by a human.
 
-Tags
+**Tags**
   optional, list of strings. A comma-separated list of arbitrary strings so that end users may easily apply any tags / labels that they see appropriate.
 
-TE
+**TE**
   optional, integer. Time-expansion factor. If not specified, then 1 (no time-expansion) is assumed.
 
-Timestamp
+**Timestamp**
   required, datetime. Date and time of the start of the recording, in ISO 8601 format. It is very strongly recommended that, if UTC offset is known, it is explicitly specified rather than recording the timestamp only in UTC "zulu" time. This is because local time is overwhelmingly more important when it comes to bat echolocation data than is absolute UTC time; unfortunately GPS receivers provide only UTC time, and the local UTC offset for a location may vary according to political boundaries. 
