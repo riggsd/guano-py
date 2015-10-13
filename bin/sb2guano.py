@@ -1,6 +1,8 @@
 #!/usr/bin/env python2
 """
 Convert files with Sonobat-format metadata to use GUANO metadata.
+
+usage: sb2guano.py WAVFILE...
 """
 
 import sys
@@ -78,7 +80,7 @@ def extract_sonobat_metadata(fname):
 
 
 def sonobat2guano(fname):
-    """Convert a file with Sonobat metadata to GUANO metadata (but leave the old stuff in place)"""
+    """Convert a file with Sonobat metadata to GUANO metadata"""
     print '\n', fname
     sb_md = extract_sonobat_metadata(fname)
     pprint(sb_md)
