@@ -83,6 +83,9 @@ def sonobat2guano(fname):
     """Convert a file with Sonobat metadata to GUANO metadata"""
     print '\n', fname
     sb_md = extract_sonobat_metadata(fname)
+    if not sb_md:
+        print >> sys.stderr, 'Skipping non-Sonobat file: ' + fname
+        return False
     pprint(sb_md)
 
     gfile = GuanoFile(fname)
@@ -92,7 +95,7 @@ def sonobat2guano(fname):
     if sb_md.get('te', 1) != 1:
         gfile['TE'] = sb_md['te']
     gfile['Length'] = sb_md['length']
-    gfile['Note'] = sb_md['note'].strip().replace('\r', '\\n')
+    gfile['Note'] = sb_md['note'].strip().replace('\r\n', '\\n').replace('\n', '\\n')
     if sb_md.get('species', None):
         gfile['Species Auto ID'] = sb_md['species']
     print gfile._as_string()
@@ -104,5 +107,12 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         print >> sys.stderr, 'usage: %s FILE...' % os.path.basename(sys.argv[0])
         sys.exit(2)
-    for fname in sys.argv[1:]:
+
+    if os.name == 'nt' and '*' in sys.argv[1]:
+        from glob import glob
+        fnames = glob(sys.argv[1])
+    else:
+        fnames = sys.argv[1:]
+
+    for fname in fnames:
         sonobat2guano(fname)
