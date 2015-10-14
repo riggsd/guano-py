@@ -16,8 +16,8 @@ import mmap
 import wave
 import struct
 import os.path
+import shutil
 from datetime import datetime
-from pprint import pprint
 from contextlib import closing
 from tempfile import NamedTemporaryFile
 
@@ -210,6 +210,7 @@ class GuanoFile(object):
 
         # create tempfile and write our vanilla .WAV ('data' sub-chunk only)
         tempfile = NamedTemporaryFile(mode='w+b', prefix='guano_temp-', suffix='.wav', delete=False)
+        shutil.copystat(self.filename, tempfile.name)
         with closing(wave.Wave_write(tempfile)) as wavfile:
             wavfile.setparams(self._wav_params)
             wavfile.writeframes(self._wav_data)
@@ -242,6 +243,8 @@ class GuanoFile(object):
 
 
 if __name__ == '__main__':
+    from pprint import pprint
+
     if len(sys.argv) < 2:
         print >> sys.stderr, 'usage: guano.py FILENAME...'
         sys.exit(2)
