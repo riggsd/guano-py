@@ -7,7 +7,7 @@ for representing bat acoustics data.
 """
 
 
-__version__ = '0.0.2'
+__version__ = '0.0.1dev2'
 
 
 import os
