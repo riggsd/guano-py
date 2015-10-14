@@ -35,7 +35,12 @@ exception of this reference implementation, no software ecosystem currently
 supports reading or editing GUANO metadata.
 
 GUANO will be considered at the "Version 1.0" stage when the first conforming
-implementation hardware is released publically.
+implementation hardware is released publicly.
+
+Note that mention of manufacturers and products within this specification are
+used for reference or for example, and do not indicate adoption or
+endorsement of the GUANO format by those manufacturers unless explicitly
+stated so.
 
 
 Definitions and Common Data Conventions
@@ -239,6 +244,12 @@ then auto-classified with SonoBat, and subsequently manually vetted::
 Defined Fields
 --------------
 
+Writing implementations, whenever possible, are encouraged to utilize
+fields from the following defined or "well-known" list. 
+
+Reading implementations should expect to encounter any of the following
+fields in a compliant GUANO file. 
+
 **GUANO|Version**
   required, float. GUANO metadata version in use. This specification defines version `1.0`.
 
@@ -273,7 +284,7 @@ Defined Fields
   optional, multiline string. Freeform textual note associated with the recording.
 
 **Samplerate**
-  optional, integer. Recording samplerate, in Hz.
+  optional, integer. Recording samplerate, in Hz. This should be equal to the .WAV samplerate for direct-recording detectors, but should be a product of ``TE`` and the .WAV samplerate for time-expansion detectors.
 
 **Species Auto ID**
   optional, string. Species or guild classification, as determined by automated classification.
@@ -285,7 +296,14 @@ Defined Fields
   optional, list of strings. A comma-separated list of arbitrary strings so that end users may easily apply any tags / labels that they see appropriate.
 
 **TE**
-  optional, integer. Time-expansion factor. If not specified, then 1 (no time-expansion) is assumed.
+  optional, integer. Time-expansion factor. If not specified, then 1 (*no* time-expansion, aka direct-recording) is assumed.
 
 **Timestamp**
-  required, datetime. Date and time of the start of the recording, in ISO 8601 format. It is very strongly recommended that, if UTC offset is known, it is explicitly specified rather than recording the timestamp only in UTC "zulu" time. This is because local time is overwhelmingly more important when it comes to bat echolocation data than is absolute UTC time; unfortunately GPS receivers provide only UTC time, and the local UTC offset for a location may vary according to political boundaries. 
+  required, datetime. Date and time of the start of the recording, in ISO 8601 compatible format (see datetime specification above). It is very strongly recommended that, if UTC offset is known, it is explicitly specified rather than recording the timestamp only in UTC "zulu" time. This is because local time is overwhelmingly more important when it comes to bat echolocation data than is absolute UTC time; unfortunately GPS receivers provide only UTC time, and the local UTC offset for a location may vary according to political boundaries. 
+
+
+Specification History
+---------------------
+
+2015-10-12  0.0.1  Initial public release of draft GUANO specification with
+                   reference Python implementation
