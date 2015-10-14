@@ -24,6 +24,8 @@ SB_FREQ_REGEX = re.compile(r'\(#([\d]+)#\)')
 SB_TE_REGEX = re.compile(r'<&([\d]*)&>')
 SB_DFREQ_REGEX = re.compile(r'\[!([\w]+)!\]')
 
+D500X_ATTRIBUTE_REGEX = re.compile(r'(?P<d500x>D500X V.+S/N=\d+)')
+
 # old SonoBat format e.g. TransectTestRun1-24Mar11-16,27,56-Myoluc.wav
 SONOBAT_FILENAME1_REGEX = re.compile(r'(?P<date>[ 0123][0-9][A-Z][a-z][a-z][0-9][0-9]-[012][0-9],[0-6][0-9],[0-6][0-9])(-(?P<species>[A-Za-z]+))?')
 SONOBAT_FILENAME1_TIMESTAMP_FMT = '%d%b%y-%H,%M,%S'
@@ -63,7 +65,15 @@ def extract_sonobat_metadata(fname):
             sb_md['samplerate'] = int(re.search(SB_FREQ_REGEX, md).groups()[0])
             sb_md['te'] = int(re.search(SB_TE_REGEX, md).groups()[0])
             sb_md['dfreq'] = re.search(SB_DFREQ_REGEX, md).groups()[0]
-            sb_md['note'] = md.split('!]', 1)[1]
+            note = md.split('!]', 1)[1]
+            # If this file was created with Sonobat D500X Attributer, parse out D500X metadata
+            match = re.search(D500X_ATTRIBUTE_REGEX, note)
+            if match and match.group('d500x').count(',') == 8:
+                fw, f, pre, len, hp, a, ts, timestamp, sn = match.group('d500x').split(',')
+                f, pre, len, hp, a, ts, sn = tuple(s.split('=',1)[1].strip() for s in (f, pre, len, hp, a, ts, sn))
+                sb_md['d500x'] = dict(Firmware=fw, F=f, PRE=pre, LEN=len, HP=hp, A=a, TS=ts, Timestamp=timestamp, Serial=sn)
+            # TODO: parse out BAT AR125 metadata fields
+            sb_md['note'] = note
 
     with closing(wave.open(fname)) as wavfile:
         duration_s = wavfile.getnframes() / float(wavfile.getframerate())
@@ -98,6 +108,9 @@ def sonobat2guano(fname):
     gfile['Note'] = sb_md['note'].strip().replace('\r\n', '\\n').replace('\n', '\\n')
     if sb_md.get('species', None):
         gfile['Species Auto ID'] = sb_md['species']
+    if 'd500x' in sb_md:
+        for k, v in sb_md['d500x'].items():
+            gfile['PET', k] = v
     print gfile._as_string()
 
     gfile.write()
