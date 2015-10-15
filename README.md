@@ -21,16 +21,20 @@ Download and install magically from the Python Package Index::
 
     $> pip install -U guano
 
+In addition to having the `guano` Python module available for use in your own
+software, you'll also have a small collection of [useful scripts](bin/) to use.
 
-Check out the project from GitHub and install locally in developer mode to hack on it yourself::
+
+Alternately, you can check out the project from GitHub and install locally in
+developer mode to hack on it yourself::
 
     $> git clone https://github.com/riggsd/guano-py.git
     $> cd guano-py
     $> python setup.py develop
 
 
-Usage
-=====
+API Usage
+=========
 
 ```python
 from guano import GuanoFile
