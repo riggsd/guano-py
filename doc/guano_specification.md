@@ -73,6 +73,14 @@ string "\n" as a newline. At this time, this specification makes no attempt
 to define an escape for encoding the literal string "\n" with a meaning apart
 from "newline".
 
+**TODO:** Binary field values should be encoded as Base64. However, Base64 enforces
+a maximum line length, and the GUANO metadata format thus far delimits fields
+by newline. Enforcing a short line length for potentially-large binary values
+would ease the development of reading implementations which must allocate
+memory to read in lines. What is the best way to support these multi-line,
+potentially large (perhaps megabytes in size for an embedded voice note, for
+example) binary values?
+
 Extra whitespace may be used when formatting field names and values; whitespace
 should be trimmed upon reading. This gives writing implementations freedom to
 optionally format the metadata upon writing for clarity or organization. This
