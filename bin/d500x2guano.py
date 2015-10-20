@@ -33,7 +33,7 @@ def unlock(fname):
     """Enable filesystem modification of a locked file"""
     if os.name == 'nt':
         os.chmod(fname, stat.S_IWRITE)
-    elif os.name == 'posix':
+    elif os.name == 'posix' and hasattr(os, 'chflags'):
         os.chflags(fname, os.stat(fname).st_flags & ~stat.UF_IMMUTABLE)
 
 

@@ -87,7 +87,7 @@ def extract_sonobat_metadata(fname):
 
     with closing(wave.open(fname)) as wavfile:
         duration_s = wavfile.getnframes() / float(wavfile.getframerate())
-        sb_md['length'] = duration_s / sb_md['te']
+        sb_md['length'] = round(duration_s / sb_md['te'], 2)
 
     # try to extract info from the filename
     for regex, timestamp_fmt in SB_FILENAME_FORMATS:
@@ -133,12 +133,13 @@ def sonobat2guano(fname):
 
 
 if __name__ == '__main__':
+    from glob import glob
+
     if len(sys.argv) < 2:
         print >> sys.stderr, 'usage: %s FILE...' % os.path.basename(sys.argv[0])
         sys.exit(2)
 
     if os.name == 'nt' and '*' in sys.argv[1]:
-        from glob import glob
         fnames = glob(sys.argv[1])
     else:
         fnames = sys.argv[1:]
