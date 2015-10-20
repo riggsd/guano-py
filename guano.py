@@ -7,7 +7,7 @@ for representing bat acoustics data.
 """
 
 
-__version__ = '0.0.1dev2'
+__version__ = '0.0.1dev3'
 
 
 import os
@@ -83,9 +83,9 @@ class GuanoFile(object):
 
     def __init__(self, filename):
         self.filename = filename
-        self._md = {}  # map of maps:  namespace->key->val
-        self._wav_data = None
-        self._wav_params = None
+        self.wav_data = None
+        self.wav_params = None
+        self._md = {}  # metadata storage - map of maps:  namespace->key->val
 
         self._load()
 
@@ -112,7 +112,7 @@ class GuanoFile(object):
                     raise ValueError('Expected RIFF chunk "WAVE" at 0x08, but found "%s"' % repr(chunk))
 
                 try:
-                    self._wav_params = wave.open(infile).getparams()
+                    self.wav_params = wave.open(infile).getparams()
                 except RuntimeError as e:
                     return ValueError(e)  # Python's chunk.py throws this inappropriate exception
 
@@ -127,10 +127,10 @@ class GuanoFile(object):
                     if subchunk == 'guan':
                         metadata_buf = mmfile[offset:offset+size]
                     elif subchunk == 'data':
-                        self._wav_data = mmfile[offset:offset+size]
+                        self.wav_data = mmfile[offset:offset+size]
                     offset += size
 
-                if not self._wav_data:
+                if not self.wav_data:
                     raise ValueError('No DATA sub-chunk found in file')
                 if not metadata_buf:
                     #print >> sys.stderr, 'No GUANO metadata found in file: %s' % self.filename
@@ -192,6 +192,31 @@ class GuanoFile(object):
             self._md[namespace] = {}
         self._md[namespace][key] = value
 
+    def get_namespaces(self):
+        """Get list of all namespaces represented by this metadata"""
+        return self._md.keys()
+
+    def items(self, namespace=None):
+        """Iterate over (key, value) for entire metadata or for specified namespace of fields"""
+        if namespace is not None:
+            for k, v in self._md[namespace].items():
+                yield k, v
+        else:
+            for namespace, data in self._md.items():
+                for k, v in data.items():
+                    k = '%s|%s' % (namespace, k) if namespace else k
+                    yield k, v
+
+    def items_namespaced(self):
+        """Iterate over (namespace, key, value) for entire metadata"""
+        for namespace, data in self._md.items():
+            for k, v in data.items():
+                yield namespace, k, v
+
+    def well_known_items(self):
+        """Iterate over (key, value) for all the well-known (defined) fields"""
+        return self.items('')
+
     def _as_string(self):
         lines = []
         for namespace, data in self._md.items():
@@ -212,8 +237,8 @@ class GuanoFile(object):
         tempfile = NamedTemporaryFile(mode='w+b', prefix='guano_temp-', suffix='.wav', delete=False)
         shutil.copystat(self.filename, tempfile.name)
         with closing(wave.Wave_write(tempfile)) as wavfile:
-            wavfile.setparams(self._wav_params)
-            wavfile.writeframes(self._wav_data)
+            wavfile.setparams(self.wav_params)
+            wavfile.writeframes(self.wav_data)
 
         # add the 'guan' sub-chunk after the 'data' sub-chunk
         tempfile.seek(tempfile.tell())
@@ -258,3 +283,6 @@ if __name__ == '__main__':
         print '\n' + fname
         guanofile = GuanoFile(fname)
         pprint(guanofile._md)
+
+        for k, v in guanofile.items():
+            print '%s:  %s' % (k, v)
