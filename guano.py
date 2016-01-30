@@ -128,6 +128,8 @@ class GuanoFile(object):
                         metadata_buf = mmfile[offset:offset+size]
                     elif subchunk == 'data':
                         self.wav_data = mmfile[offset:offset+size]
+                    if size % 2:
+                        offset += 1  # align to 16-bit boundary
                     offset += size
 
                 if not self.wav_data:
