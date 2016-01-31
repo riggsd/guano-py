@@ -73,7 +73,7 @@ string "\n" as a newline. At this time, this specification makes no attempt
 to define an escape for encoding the literal string "\n" with a meaning apart
 from "newline".
 
-**TODO:** Binary field values should be encoded as Base64. However, Base64 enforces
+Binary field values should be encoded as Base64. However, Base64 enforces
 a maximum line length, and the GUANO metadata format thus far delimits fields
 by newline. Enforcing a short line length for potentially-large binary values
 would ease the development of reading implementations which must allocate
@@ -192,26 +192,26 @@ The following namespaces have been reserved or registered. Any manufacturer who
 utilizes their own custom GUANO fields is encouraged to add their namespace to
 this list so that it isn't accidentally used by another manufacturer.
 
-**GUANO**
+**GUANO**  
   This reserved namespace is for meta-metadata pertaining specifically to the
   GUANO metadata in use.
 
-**BAT**
+**BAT**  
   Binary Acoustic Technologies
 
-**MSFT**
+**MSFT**  
   Myotisoft
 
-**PET**
+**PET**  
   Pettersson
 
-**SB**
+**SB**  
   SonoBat
 
-**Anabat**
+**Anabat**  
   Titley Scientific
 
-**WAC**
+**WAC**  
   Wildlife Acoustics
 
 
@@ -258,60 +258,80 @@ fields from the following defined or "well-known" list.
 Reading implementations should expect to encounter any of the following
 fields in a compliant GUANO file. 
 
-**GUANO|Version**
+**GUANO|Version**  
   required, float. GUANO metadata version in use. This specification defines version `1.0`.
 
-**GUANO|Size**
+**GUANO|Size**  
   optional, integer. Total size, in bytes, of pre-allocated GUANO metadata space. Pre-allocating whitespace within the `guan` subchunk allows for writing/editing metadata without re-writing the entirety of the file back to disk. This field should only be used if pre-allocating space, so that writing (editing) implementations may check to see if their changes overflow the bounds of pre-allocated metadata space.
 
-**Filter HP**
+**Filter HP**  
   optional, float. High-pass filter frequency, in kHz.
 
-**Filter LP**
+**Filter LP**  
   optional, float. Low-pass filter frequency, in kHz.
 
-**Length**
+**Firmware Version**  
+  optional, string. Device's firmware version, in manufacturer's own descriptive format.
+
+**Hardware Version**  
+  optional, string. Device's hardware revision or hardware options, in manufacturer's own descriptive format.
+
+**Humidity**  
+  optional, float. Relative humidity as a percentage in the range 0.0 - 100.0.
+
+**Length**  
   optional, float. Recording length, in seconds. This should be the "actual length", which will be identical to the .WAV length for direct-recorded files, but will be calculated for time-expanded recordings (.WAV length divided by TE factor).
 
-**Loc Accuracy**
-  optional, float. Location accuracy, in meters.
+**Loc Accuracy**  
+  optional, float. Location accuracy, in meters. This should be the Estimated Position Error (EPE); this statistical range states that 68% of measurements will fall within this radius, 95% of measurements will fall within twice this radius. EPE is calculated differently by different GPS receiver manufacturers, therefore it should be stressed that this value is merely an *estimate* of accuracy. Detector manufacturers may opt to estimate accuracy more coarsely if EPE is not available directly from their GPS receiver, but should express the value in the same one-sigma fashion.
 
-**Loc Elevation**
+**Loc Elevation**  
   optional, float. Elevation / altitude above mean sea level, in meters.
 
-**Loc Position**
+**Loc Position**  
   optional, (float float). Location that the recording was made, as a WGS84 latitude longitude tuple.
 
-**Make**
+**Make**  
   optional, string. Manufacturer of the recording hardware.
 
-**Model**
+**Model**  
   optional, string. Model name or number of the recording hardware.
 
-**Note**
+**Note**  
   optional, multiline string. Freeform textual note associated with the recording.
 
-**Samplerate**
+**Samplerate**  
   optional, integer. Recording samplerate, in Hz. This should be equal to the .WAV samplerate for direct-recording detectors, but should be a product of ``TE`` and the .WAV samplerate for time-expansion detectors.
 
-**Species Auto ID**
+**Species Auto ID**  
   optional, string. Species or guild classification, as determined by automated classification.
 
-**Species Manual ID**
+**Species Manual ID**  
   optional, string. Species or guild classification, as determined by a human.
 
-**Tags**
+**Tags**  
   optional, list of strings. A comma-separated list of arbitrary strings so that end users may easily apply any tags / labels that they see appropriate.
 
-**TE**
+**TE**  
   optional, integer. Time-expansion factor. If not specified, then 1 (*no* time-expansion, aka direct-recording) is assumed.
 
-**Timestamp**
+**Temperature**  
+  optional, float. Temperature in degrees Celsius. This is assumed to be the "outside temperature"; if a device records temperature inside its housing and that temperature is not an accurate proxy for outside temperature, a vendor-specific field should be used instead.
+
+**Timestamp**  
   required, datetime. Date and time of the start of the recording, in ISO 8601 compatible format (see datetime specification above). It is very strongly recommended that, if UTC offset is known, it is explicitly specified rather than recording the timestamp only in UTC "zulu" time. This is because local time is overwhelmingly more important when it comes to bat echolocation data than is absolute UTC time; unfortunately GPS receivers provide only UTC time, and the local UTC offset for a location may vary according to political boundaries. 
 
 
 Specification History
 ---------------------
 
-2015-10-12  0.0.1  Initial public release of draft GUANO specification with
-                   reference Python implementation
+2016-01-30 | 0.0.2 | Added well-known fields: Hardware Version, Firmware Version, Temperature, Humidity.  
+                     Clarified Loc Position description.
+
+2015-10-12 | 0.0.1 | Initial public release of draft GUANO specification with reference Python implementation
+
+
+Notes
+-----
+
+* The use of manufacturer or product names in this specification does not imply endorsement, support, or any other association by those manufacturers or products; nor does it imply compliance with the GUANO specification.
