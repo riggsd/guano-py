@@ -46,15 +46,6 @@ stated so.
 Definitions and Common Data Conventions
 ---------------------------------------
 
-All GUANO metadata must be persisted in big-endian format; multi-byte values
-are to be written such that the most significant byte has the lowest address
-and the least significant byte has the highest address. This is because files
-are written once, but read many times; by standardizing on an endianness we
-ease the burden on subsequent processing and analysis, regardless of hardware
-platform used for recording. This has no bearing on whether recorders choose
-to write little- or big-endian .WAV data, as specified in the .WAV (RIFF) file
-header; the GUANO metadata itself must be written big-endian.
-
 All GUANO metadata must be persisted as UTF-8 Unicode string. This is a multi-
 byte encoding which uses just a single byte for all "ASCII" data, but a
 variable number of bytes for encoding "special" characters. 
@@ -73,13 +64,9 @@ string "\n" as a newline. At this time, this specification makes no attempt
 to define an escape for encoding the literal string "\n" with a meaning apart
 from "newline".
 
-Binary field values should be encoded as Base64. However, Base64 enforces
-a maximum line length, and the GUANO metadata format thus far delimits fields
-by newline. Enforcing a short line length for potentially-large binary values
-would ease the development of reading implementations which must allocate
-memory to read in lines. What is the best way to support these multi-line,
-potentially large (perhaps megabytes in size for an embedded voice note, for
-example) binary values?
+Binary field values should be encoded as Base64 strings as defined in
+[RFC 4648](https://www.ietf.org/rfc/rfc4648.txt). Newlines may not be inserted
+into the data, and the "Base 64 Alphabet" must be used.
 
 Extra whitespace may be used when formatting field names and values; whitespace
 should be trimmed upon reading. This gives writing implementations freedom to
@@ -196,6 +183,12 @@ this list so that it isn't accidentally used by another manufacturer.
   This reserved namespace is for meta-metadata pertaining specifically to the
   GUANO metadata in use.
 
+**User**  
+  Reserved namespace for user-defined fields.
+
+**Anabat**  
+  Titley Scientific
+
 **BAT**  
   Binary Acoustic Technologies
 
@@ -207,9 +200,6 @@ this list so that it isn't accidentally used by another manufacturer.
 
 **SB**  
   SonoBat
-
-**Anabat**  
-  Titley Scientific
 
 **WAC**  
   Wildlife Acoustics
@@ -325,6 +315,9 @@ fields in a compliant GUANO file.
 Specification History
 ---------------------
 
+2016-03-02 | 0.0.3 | Clarified Base64 encoding of binary data. Added `User` namespace. Removed
+                     mention of UTF-8 endianness.
+
 2016-01-30 | 0.0.2 | Added well-known fields: Hardware Version, Firmware Version, Temperature, Humidity.  
                      Clarified Loc Position description.
 
@@ -334,4 +327,6 @@ Specification History
 Notes
 -----
 
-* The use of manufacturer or product names in this specification does not imply endorsement, support, or any other association by those manufacturers or products; nor does it imply compliance with the GUANO specification.
+* The use of manufacturer or product names in this specification does not imply endorsement,
+  support, or any other association by those manufacturers or products; nor does it imply compliance
+  with the GUANO specification.
