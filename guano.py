@@ -7,7 +7,7 @@ for representing bat acoustics data.
 """
 
 
-__version__ = '0.0.1dev3'
+__version__ = '0.0.2'
 
 
 import os
@@ -194,6 +194,15 @@ class GuanoFile(object):
             self._md[namespace] = {}
         self._md[namespace][key] = value
 
+    def __contains__(self, item):
+        if type(item) == tuple:
+            namespace, key = item[0], item[1]
+        elif '|' in item:
+            namespace, key = item.split('|', 1)
+        else:
+            namespace, key = '', item
+        return namespace in self._md and key in self._md[namespace]
+
     def get_namespaces(self):
         """Get list of all namespaces represented by this metadata"""
         return self._md.keys()
@@ -288,3 +297,6 @@ if __name__ == '__main__':
 
         for k, v in guanofile.items():
             print '%s:  %s' % (k, v)
+
+        if 'GUANO|Version' in guanofile:
+            print '\nValid GUANO file, version %s' % guanofile['GUANO|Version']
