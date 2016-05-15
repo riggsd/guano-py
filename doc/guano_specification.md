@@ -192,7 +192,7 @@ this list so that it isn't accidentally used by another manufacturer.
 **BAT**  
   Binary Acoustic Technologies
   
-**BATREC**
+**BATREC**  
   Bat Recorder by Bill Kraus
 
 **MSFT**  
@@ -203,9 +203,6 @@ this list so that it isn't accidentally used by another manufacturer.
 
 **SB**  
   SonoBat
-
-**WAC**  
-  Wildlife Acoustics
 
 
 Example
