@@ -191,6 +191,9 @@ this list so that it isn't accidentally used by another manufacturer.
 
 **BAT**  
   Binary Acoustic Technologies
+  
+**BATREC**
+  Bat Recorder by Bill Kraus
 
 **MSFT**  
   Myotisoft
@@ -305,8 +308,11 @@ fields in a compliant GUANO file.
 **TE**  
   optional, integer. Time-expansion factor. If not specified, then 1 (*no* time-expansion, aka direct-recording) is assumed.
 
-**Temperature**  
-  optional, float. Temperature in degrees Celsius. This is assumed to be the "outside temperature"; if a device records temperature inside its housing and that temperature is not an accurate proxy for outside temperature, a vendor-specific field should be used instead.
+**Temperature Ext**  
+  optional, float. External temperature in degrees Celsius. This is the temperature outside the device's housing - the "ambient" temperature.
+
+**Temperature Int**  
+  optional, float. Internal temperature in degrees Celsius. This is the temperature as measured inside the device's housing, where there is an expectation of some variance from actual "ambient" temperature.
 
 **Timestamp**  
   required, datetime. Date and time of the start of the recording, in ISO 8601 compatible format (see datetime specification above). It is very strongly recommended that, if UTC offset is known, it is explicitly specified rather than recording the timestamp only in UTC "zulu" time. This is because local time is overwhelmingly more important when it comes to bat echolocation data than is absolute UTC time; unfortunately GPS receivers provide only UTC time, and the local UTC offset for a location may vary according to political boundaries. 
@@ -315,11 +321,14 @@ fields in a compliant GUANO file.
 Specification History
 ---------------------
 
+2016-05-15 | 0.0.4 | Added `BATREC` vendor namespace for Android Bat Recorder by Bill Kraus. 
+                     Separated `Temperature` field into `Temperature Ext` and `Temperature Int`.
+
 2016-03-02 | 0.0.3 | Clarified Base64 encoding of binary data. Added `User` namespace. Removed
                      mention of UTF-8 endianness.
 
-2016-01-30 | 0.0.2 | Added well-known fields: Hardware Version, Firmware Version, Temperature, Humidity.  
-                     Clarified Loc Position description.
+2016-01-30 | 0.0.2 | Added well-known fields: `Hardware Version`, `Firmware Version`, `Temperature`, `Humidity`.  
+                     Clarified `Loc Position` description.
 
 2015-10-12 | 0.0.1 | Initial public release of draft GUANO specification with reference Python implementation
 
