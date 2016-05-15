@@ -7,7 +7,7 @@ for representing bat acoustics data.
 """
 
 
-__version__ = '0.0.3'
+__version__ = '0.0.4dev'
 
 
 import os
@@ -20,6 +20,7 @@ import shutil
 from datetime import datetime
 from contextlib import closing
 from tempfile import NamedTemporaryFile
+from collections import OrderedDict
 
 
 WHITESPACE = ' \t\n\x0b\x0c\r\0'
@@ -85,7 +86,7 @@ class GuanoFile(object):
         self.filename = filename
         self.wav_data = None
         self.wav_params = None
-        self._md = {}  # metadata storage - map of maps:  namespace->key->val
+        self._md = OrderedDict()  # metadata storage - map of maps:  namespace->key->val
 
         self._load()
 
@@ -148,7 +149,7 @@ class GuanoFile(object):
                     namespace, key, full_key, val = namespace.strip(), key.strip(), full_key.strip(), val.strip()
 
                     if namespace not in self._md:
-                        self._md[namespace] = {}
+                        self._md[namespace] = OrderedDict()
                     self._md[namespace][key] = self._coerce(full_key, val)
 
     @classmethod
@@ -286,7 +287,7 @@ if __name__ == '__main__':
         sys.exit(2)
 
     # the following is an example of how to register a few namespaced keys with data type coercion
-    GuanoFile.register('SB', ['DiscrProb', 'Version'], float)
+    GuanoFile.register('SB', ['DiscrProb', 'MeanTBC'], float)
     GuanoFile.register('Anabat', ['Humidity', 'Temperature'], float)
     GuanoFile.register('Anabat', 'Start', parse_timestamp, serialize_timestamp)
 
