@@ -84,7 +84,8 @@ or namespaced manufacturer-specific fields). Editing implementations should
 persist all unknown metadata fields exactly as read.
 
 Dates, times, and datetimes must appear in one of the following formats, which
-are subsets of the ISO 8601 and RFC 3331 specifications.
+are subsets of the [ISO 8601](https://wikipedia.org/wiki/ISO_8601) and 
+[RFC 3339](https://tools.ietf.org/html/rfc3339) specifications.
 
 **Date**
 
@@ -109,7 +110,7 @@ are subsets of the ISO 8601 and RFC 3331 specifications.
 * 2015-12-31T23:59:59.123Z
 * 2015-12-31T23:59:59.123456Z
 
-**UTC Relative DateTime***
+**UTC Relative DateTime**
 
 * 2015-12-31T23:59:59+04:00
 * 2015-12-31T23:59:59.123+04:00
