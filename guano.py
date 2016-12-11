@@ -17,34 +17,84 @@ import wave
 import struct
 import os.path
 import shutil
-from datetime import datetime
+from datetime import datetime, tzinfo, timedelta
 from contextlib import closing
 from tempfile import NamedTemporaryFile
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 
 
 WHITESPACE = ' \t\n\x0b\x0c\r\0'
 
+wavparams = namedtuple('wavparams', 'nchannels, sampwidth, framerate, nframes, comptype, compname')
+
+
+_ZERO = timedelta(0)
+
+class tzutc(tzinfo):
+    """UTC timezone"""
+
+    def utcoffset(self, dt):
+        return _ZERO
+
+    def tzname(self, dt):
+        return 'UTC'
+
+    def dst(self, dt):
+        return _ZERO
+
+    def __repr__(self):
+        return 'UTC'
+
+utc = tzutc()
+
+class tzoffset(tzinfo):
+    """
+    Fixed-offset concrete timezone implementation.
+    `offset` should be numeric hours or ISO format string like '-07:00'.
+    """
+
+    def __init__(self, offset=None):
+        if isinstance(offset, basestring):
+            # offset as ISO string '-07:00' or '-07' format
+            vals = offset.split(':')
+            offset = int(vals[0]) if len(vals) == 1 else int(vals[0]) + int(vals[1])/60.0
+        self._offset_hours = offset
+        self._offset = timedelta(hours=offset)
+
+    def utcoffset(self, dt):
+        return self._offset
+
+    def dst(self, dt):
+        return _ZERO
+
+    def tzname(self, dt):
+        return 'UTC'+str(self._offset_hours)
+
+    def __repr__(self):
+        return self.tzname(None)
+
 
 def parse_timestamp(s):
     """Parse a string in supported subset of ISO 8601 / RFC 3331 format to tz-naive local `datetime`"""
-    s = s.replace(' ', 'T', 1)  # support using space rather than 'T' date/time delimiter
-    if s[-1] == 'Z':  # time in UTC "zulu"
-        # TODO: convert UTC to local? (no guarantee that our "local" was local at recording time)
-        return datetime.strptime(s[:-1], '%Y-%m-%dT%H:%M:%S')
-    elif len(s) in (22, 25):  # UTC offset provided
-        s, offset = s[:19], s[19:]
-        return datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
-    elif len(s) == 26:  # milliseconds included
-        return datetime.strptime(s, '%Y-%m-%dT%H:%M:%S.%f')
+    # Python's standard library does an awful job of parsing ISO timestamps, so we do it manually
+    timestamp, tz = None, None
+
+    s = s.replace(' ', 'T', 1)  # support using space rather than 'T' as date/time delimiter
+
+    if s[-1] == 'Z':  # UTC "zulu" time
+        tz = utc
+        s = s[:-1]
+    elif '+' in s or s.count('-') == 3:  # UTC offset provided
+        i = s.index('+') if '+' in s else s.rfind('-')
+        s, offset = s[:i], s[i:]
+        tz = tzoffset(offset)
+
+    if len(s) > 22:  # milliseconds included
+        timestamp = datetime.strptime(s, '%Y-%m-%dT%H:%M:%S.%f')
     else:
-        return datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
+        timestamp = datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
 
-
-def serialize_timestamp(timestamp):
-    if timestamp.microsecond:
-        return timestamp.strftime('%Y-%m-%dT%H:%M:%S.%f')
-    return timestamp.strftime('%Y-%m-%dT%H:%M:%S')
+    return timestamp.replace(tzinfo=tz) if tz else timestamp
 
 
 class GuanoFile(object):
@@ -79,7 +129,8 @@ class GuanoFile(object):
     }
     _serialization_rules = {
         'Loc Position': lambda value: '%f %f' % value,
-        'Timestamp': serialize_timestamp,
+        'Timestamp': lambda value: value.isoformat(),
+        'Length': lambda value: '%.2f' % value
     }
 
     def __init__(self, filename):
@@ -113,7 +164,7 @@ class GuanoFile(object):
                     raise ValueError('Expected RIFF chunk "WAVE" at 0x08, but found "%s"' % repr(chunk))
 
                 try:
-                    self.wav_params = wave.open(infile).getparams()
+                    self.wav_params = wavparams(*wave.open(infile).getparams())
                 except RuntimeError as e:
                     return ValueError(e)  # Python's chunk.py throws this inappropriate exception
 
@@ -240,6 +291,8 @@ class GuanoFile(object):
 
     def write(self, make_backup=True):
         """Write the GUANO file to disk"""
+        # FIXME: optionally write *other* subchunks for redundant metadata formats
+
         # prepare our metadata for a byte-wise representation
         md_bytes = bytearray(self._as_string(), 'utf-8')
         if len(md_bytes) % 2:
@@ -289,7 +342,7 @@ if __name__ == '__main__':
     # the following is an example of how to register a few namespaced keys with data type coercion
     GuanoFile.register('SB', ['DiscrProb', 'MeanTBC'], float)
     GuanoFile.register('Anabat', ['Humidity', 'Temperature'], float)
-    GuanoFile.register('Anabat', 'Start', parse_timestamp, serialize_timestamp)
+    GuanoFile.register('Anabat', 'Start', parse_timestamp, lambda x: x.isoformat())
 
     for fname in sys.argv[1:]:
         print '\n' + fname
