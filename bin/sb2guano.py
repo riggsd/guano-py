@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 """
 Convert files with Sonobat-format metadata to use GUANO metadata.
 

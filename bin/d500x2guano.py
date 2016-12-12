@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 """
 Convert files with raw D500X metadata to use GUANO metadata instead.
 
