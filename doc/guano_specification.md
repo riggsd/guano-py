@@ -255,9 +255,6 @@ fields in a compliant GUANO file.
 **GUANO|Version**  
   required, float. GUANO metadata version in use. This specification defines version `1.0`.
 
-**GUANO|Size**  
-  optional, integer. Total size, in bytes, of pre-allocated GUANO metadata space. Pre-allocating whitespace within the `guan` subchunk allows for writing/editing metadata without re-writing the entirety of the file back to disk. This field should only be used if pre-allocating space, so that writing (editing) implementations may check to see if their changes overflow the bounds of pre-allocated metadata space.
-
 **Filter HP**  
   optional, float. High-pass filter frequency, in kHz.
 
@@ -322,7 +319,8 @@ fields in a compliant GUANO file.
 Specification History
 ---------------------
 
-2017-01-15 | 1.0.0 | Re-added `WA` vendor namespace for Wildlife Acoustics.
+2017-01-15 | 1.0.0 | Removed redundant `GUANO|Size` field.
+                     Re-added `WA` vendor namespace for Wildlife Acoustics.
 
 2016-05-15 | 0.0.4 | Added `BATREC` vendor namespace for Android Bat Recorder by Bill Kraus. 
                      Separated `Temperature` field into `Temperature Ext` and `Temperature Int`.
