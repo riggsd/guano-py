@@ -291,8 +291,14 @@ fields in a compliant GUANO file.
 **Note**  
   optional, multiline string. Freeform textual note associated with the recording.
 
+**Original Filename**  
+  optional, string. The original filename as used by the recording hardware. Editing implementations should persist this value after renaming and/or editing a file as a sort of "paper trail".
+
 **Samplerate**  
   optional, integer. Recording samplerate, in Hz. This should be equal to the .WAV samplerate for direct-recording detectors, but should be a product of ``TE`` and the .WAV samplerate for time-expansion detectors.
+
+**Serial**  
+  optional, string. Serial number or unique identifier of the recording hardware.
 
 **Species Auto ID**  
   optional, list of strings. Species or guild classifications, as determined by automated classification. This field allows a comma-separated list of values, however some reading implementations may only be able to handle a single species per file; therefore the most "dominant" or "primary" species present in a file, when applicable, should be the first value in this list.
@@ -320,6 +326,7 @@ Specification History
 ---------------------
 
 2017-01-15 | 1.0.0 | Allow multiple values for `Species Auto ID` and `Species Manual ID`.
+                     Added `Serial` and `Original Filename` fields.
                      Removed redundant `GUANO|Size` field.
                      Re-added `WA` vendor namespace for Wildlife Acoustics.
 
