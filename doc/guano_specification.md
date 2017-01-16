@@ -29,13 +29,15 @@ file formats; but this specification concentrates only on the standard .WAV.
 Status
 ------
 
-This format and specification are in the early pre-implementation stage. No
-bat detector manufacturer currently writes GUANO metadata; and with the
-exception of this reference implementation, no software ecosystem currently
-supports reading or editing GUANO metadata.
+This format and specification are in the production phase. There currently exist
+hardware bat detectors which write GUANO-format recordings, and real-world
+software which reads and writes GUANO metadata.
 
-GUANO will be considered at the "Version 1.0" stage when the first conforming
-implementation hardware is released publicly.
+GUANO is considered at the "Version 1.0" stage, and though no significant
+backwards incompatible changes will be made to this 1.0 version of the format,
+slight clarifications and bugfixes may be made to this specification in order
+to best address vendor and user concerns. The changelog at the end of this
+document details all changes to the specification going forward.
 
 Note that mention of manufacturers and products within this specification are
 used for reference or for example, and do not indicate adoption or
@@ -146,7 +148,8 @@ colon character, UTF-8 and ASCII ``0x3A``. Keys may not contain a ':'
 character (obviously). Keys may contain a '|' character so that vendors may
 namespace their own vendor-specific fields; for example,
 `PET|D500X|TSens: high` could be a value which applies to Pettersson's D500X
-but not to their other products.
+but not to their other products. Field keys are case sensitive, and whitespace
+within is significant.
 
 Field values consist of everything after the first ':' character, until the
 next '\n' newline (or EOF), and after having all surrounding whitespace
@@ -157,8 +160,12 @@ Empty lines are ignored. In fact, the examples in this document use extra
 empty lines for legibility, though this is absolutely not a requirement for
 writing implementations.
 
-Field keys may occur in any order. However, keys may not be duplicated within
-a single file!
+The `GUANO` namespace must occur before any others, and the `GUANO|Version`
+field must be the first field in a metadata block. This is to ensure that,
+if future format changes are incompatible, reading implementations may
+change their behavior for older format versions. Other than the `GUANO`
+namespace restriction, namespaces and field keys may occur in any order.
+However, keys may not be duplicated within a single file!
 
 
 Extensible Namespaces
@@ -253,7 +260,7 @@ Reading implementations should expect to encounter any of the following
 fields in a compliant GUANO file. 
 
 **GUANO|Version**  
-  required, float. GUANO metadata version in use. This specification defines version `1.0`.
+  required, string. GUANO metadata version in use. Not only is this field required, but it *must* be the first field that appears within a GUANO metadata subchunk. Its value is a string, which may be compared lexicographically, and which defines the GUANO specification version that the file conforms to. This specification defines version `1.0`.
 
 **Filter HP**  
   optional, float. High-pass filter frequency, in kHz.
@@ -325,7 +332,8 @@ fields in a compliant GUANO file.
 Specification History
 ---------------------
 
-2017-01-15 | 1.0.0 | Allow multiple values for `Species Auto ID` and `Species Manual ID`.
+2017-01-15 | 1.0.0 | Updated GUANO specification status to reflect production nature of format.
+                     Allow multiple values for `Species Auto ID` and `Species Manual ID`.
                      Added `Serial` and `Original Filename` fields.
                      Removed redundant `GUANO|Size` field.
                      Re-added `WA` vendor namespace for Wildlife Acoustics.
