@@ -205,6 +205,9 @@ this list so that it isn't accidentally used by another manufacturer.
 **SB**  
   SonoBat
 
+**WA**  
+  Wildlife Acoustics
+
 
 Example
 -------
@@ -318,6 +321,8 @@ fields in a compliant GUANO file.
 
 Specification History
 ---------------------
+
+2017-01-15 | 1.0.0 | Re-added `WA` vendor namespace for Wildlife Acoustics.
 
 2016-05-15 | 0.0.4 | Added `BATREC` vendor namespace for Android Bat Recorder by Bill Kraus. 
                      Separated `Temperature` field into `Temperature Ext` and `Temperature Int`.
