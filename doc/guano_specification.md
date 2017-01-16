@@ -295,10 +295,10 @@ fields in a compliant GUANO file.
   optional, integer. Recording samplerate, in Hz. This should be equal to the .WAV samplerate for direct-recording detectors, but should be a product of ``TE`` and the .WAV samplerate for time-expansion detectors.
 
 **Species Auto ID**  
-  optional, string. Species or guild classification, as determined by automated classification.
+  optional, list of strings. Species or guild classifications, as determined by automated classification. This field allows a comma-separated list of values, however some reading implementations may only be able to handle a single species per file; therefore the most "dominant" or "primary" species present in a file, when applicable, should be the first value in this list.
 
 **Species Manual ID**  
-  optional, string. Species or guild classification, as determined by a human.
+  optional, list of strings. Species or guild classifications, as determined by a human.  This field allows a comma-separated list of values, however some reading implementations may only be able to handle a single species per file; therefore the most "dominant" or "primary" species present in a file, when applicable, should be the first value in this list.
 
 **Tags**  
   optional, list of strings. A comma-separated list of arbitrary strings so that end users may easily apply any tags / labels that they see appropriate.
@@ -319,7 +319,8 @@ fields in a compliant GUANO file.
 Specification History
 ---------------------
 
-2017-01-15 | 1.0.0 | Removed redundant `GUANO|Size` field.
+2017-01-15 | 1.0.0 | Allow multiple values for `Species Auto ID` and `Species Manual ID`.
+                     Removed redundant `GUANO|Size` field.
                      Re-added `WA` vendor namespace for Wildlife Acoustics.
 
 2016-05-15 | 0.0.4 | Added `BATREC` vendor namespace for Android Bat Recorder by Bill Kraus. 
@@ -332,6 +333,8 @@ Specification History
                      Clarified `Loc Position` description.
 
 2015-10-12 | 0.0.1 | Initial public release of draft GUANO specification with reference Python implementation
+
+2014-10-03 | 0.0.0 | Initial private draft of GUANO metadata specification.
 
 
 Notes
