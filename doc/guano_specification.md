@@ -17,13 +17,11 @@ GUANO aims to provide an open and extensible format which any manufacturer
 of hardware or software may utilize for persisting metadata, such that their
 metadata may be semantically interpreted. 
 
-This format specifically deals with embedding metadata into .WAV (RIFF) files,
-as the current bulk of incompatible industry formats pertains to direct or
-time-expanded full-spectrum recordings in the .WAV format. Other file formats
-are in use (examples include WavPack recordings from Binary Acoustic Technology
-hardware, and WAC recordings from Wildlife Acoustics hardware), and
-manufacturers are invited to explore the application of GUANO metadata to those
-file formats; but this specification concentrates only on the standard .WAV.
+This specification also describes the a standard for embedding GUANO metadata
+inside full-spectrum .WAV files as well as zero-cross Anabat files, which
+cover the majority of bat acoustic recordings in use. Other file formats
+are also in use, and manufacturers are invited to explore the application of
+GUANO metadata to those file formats as well.
 
 
 Status
@@ -59,12 +57,15 @@ requires the base10 string literal representation.
 Newlines must be specified with the '\n' linefeed (UTF-8 and ASCII 0x0A)
 character only.
 
-Values which need to encode a literal newline should write the two-byte string
-"\n" (UTF-8 and ASCII 0x5C, 0x6E). Correspondingly, software which reads
-fields that support multi-line string values should interpret the literal
-string "\n" as a newline. At this time, this specification makes no attempt
-to define an escape for encoding the literal string "\n" with a meaning apart
-from "newline".
+Multiline strings which need to encode a literal newline should write the
+two-byte string "\n" ("backslash n", UTF-8 and ASCII 0x5C 0x6E).
+Correspondingly, software which reads fields that support multiline string
+values should interpret the two-byte string "\n" as a newline. This embedded
+newline syntax applies exclusively to fields which specify "multiline string"
+as their data type. In order to keep this escaping rule as simple as
+possible, this specification does not define a way to include the literal
+string "\n"; it should always be interpreted as a newline within a multiline
+string.
 
 Binary field values should be encoded as Base64 strings as defined in
 [RFC 4648](https://www.ietf.org/rfc/rfc4648.txt). Newlines may not be inserted
@@ -122,9 +123,9 @@ are subsets of the [ISO 8601](https://wikipedia.org/wiki/ISO_8601) and
 Embedding in WAVE Files
 -----------------------
 
-The canonical .WAV file consists of a ``fmt_`` sub-chunk, which provides metadata
-about the recording data itself, and a ``data`` sub-chunk, which contains that
-primary recording data.
+The [canonical .WAV file](http://soundfile.sapp.org/doc/WaveFormat/) consists of a ``fmt_``
+sub-chunk, which provides metadata about the recording data itself, and a ``data`` sub-chunk,
+which contains that primary recording data.
 
 GUANO metadata, when embedded in a .WAV file, must be placed into its own
 sub-chunk with ID ``guan``. Implementations are free to locate the ``guan`` sub-chunk
@@ -134,6 +135,24 @@ stream recording data to disk with minimal buffering), while reading
 implementations may wish it were located at the start (so they don't need to
 read the entire file into memory). This means that all implementations must
 conform to the RIFF format and jump sub-chunk to sub-chunk if necessary.
+
+
+Embedding in Anabat Files
+-------------------------
+
+GUANO metadata may be embedded in an 
+[Anabat-format zero-cross file](http://users.lmi.net/corben/fileform.htm#ANABAT_SEQUENCE_FILE_TYPE_132)
+by writing the UTF-8 encoded metadata after the data information table, but
+before the start of the interval data. The GUANO metadata should be padded to
+an even byte length. 
+
+The data pointer at file offset 0x11A must point to the start offset of the
+interval data itself. This pointer is a little-endian 16-bit unsigned
+integer, therefore the Anabat file format limits the size of GUANO metadata
+to a maximum of 65199 bytes (0xFFFF - 0x150 bytes for the header itself).
+Older software may impose a 32kb total file size limit on Anabat files,
+but as of 2017 Titley Scientific's own hardware and software are capable of
+reading and writing arbitrarily large files.
 
 
 Metadata Format
@@ -331,6 +350,8 @@ fields in a compliant GUANO file.
 
 Specification History
 ---------------------
+
+2017-03-19 | 1.0.1 | Describe embedding GUANO metadata within an Anabat file.
 
 2017-01-15 | 1.0.0 | Updated GUANO specification status to reflect production nature of format.
                      Allow multiple values for `Species Auto ID` and `Species Manual ID`.
