@@ -7,7 +7,7 @@ for representing bat acoustics data.
 """
 
 
-__version__ = '0.0.4'
+__version__ = '0.0.5dev'
 
 
 import os
@@ -21,6 +21,11 @@ from datetime import datetime, tzinfo, timedelta
 from contextlib import closing
 from tempfile import NamedTemporaryFile
 from collections import OrderedDict, namedtuple
+from base64 import standard_b64encode as base64encode
+from base64 import standard_b64decode as base64decode
+
+
+__all__ = 'GuanoFile',
 
 
 WHITESPACE = ' \t\n\x0b\x0c\r\0'
@@ -99,7 +104,7 @@ def parse_timestamp(s):
 
 class GuanoFile(object):
     """
-    A read-only abstraction of a .WAV file with GUANO metadata.
+    An abstraction of a .WAV file with GUANO metadata.
 
     A `GuanoFile` object behaves like a normal Python `dict`, where keys can either be well-known
     metadata keys, namespaced keys, or a tuple of (namespace, key).
@@ -109,16 +114,17 @@ class GuanoFile(object):
 
     Example usage:
 
-    gfile = GuanoFile('myfile.wav')
+        gfile = GuanoFile('myfile.wav')
+        print gfile['GUANO|Version']
+        >>> 1.0
+        gfile['Species Manual ID'] = 'Mylu'
+        gfile['Comment'] = 'I love GUANO!'
+        gfile.write()
 
-    print gfile['GUANO|Version']
-    >>> 1.0
-
-    gfile['SB|Consensus'] = 'Mylu'
-
-    gfile[''] = 'I love GUANO!'
-
-    gfile.write()
+    While reading, writing, and editing .WAV files is the target usage, this class may also be
+    used completely separate from the .WAV file format. GUANO metadata can be written into an
+    Anabat-format file or to a sidecar file, for example, by populating a `GuanoFile` object and
+    then using the `serialize()` method to produce correctly formatted UTF-8 encoded metadata.
     """
 
     _coersion_rules = {
@@ -133,13 +139,16 @@ class GuanoFile(object):
         'Length': lambda value: '%.2f' % value
     }
 
-    def __init__(self, filename):
+    def __init__(self, filename=None):
         self.filename = filename
         self.wav_data = None
         self.wav_params = None
         self._md = OrderedDict()  # metadata storage - map of maps:  namespace->key->val
 
-        self._load()
+        if filename is not None and os.path.isfile(filename):
+            self._load()
+        else:
+            self._initialize_new_metadata()
 
     def _coerce(self, key, value):
         """Coerce a value from its UTF-8 representation to a specific data type"""
@@ -153,6 +162,7 @@ class GuanoFile(object):
         return serialize(value)
 
     def _load(self):
+        """Load the contents of our underlying .WAV file"""
         with open(self.filename, 'rb') as infile:
             with closing(mmap.mmap(infile.fileno(), 0, access=mmap.ACCESS_READ)) as mmfile:
 
@@ -185,23 +195,41 @@ class GuanoFile(object):
                     offset += size
 
                 if not self.wav_data:
-                    raise ValueError('No DATA sub-chunk found in file')
+                    raise ValueError('No DATA sub-chunk found in .WAV file')
                 if not metadata_buf:
-                    #print >> sys.stderr, 'No GUANO metadata found in file: %s' % self.filename
-                    return  # this must be a "new" GUANO file
+                    # no 'guan' chunk, so treat this as brand new metadata
+                    self._initialize_new_metadata()
+                    return
 
-                # split out our metadata keys
-                for line in metadata_buf.split('\n'):
-                    line = line.strip(WHITESPACE)
-                    if not line:
-                        continue
-                    full_key, val = line.split(':', 1)
-                    namespace, key = full_key.split('|', 1) if '|' in full_key else ('', full_key)
-                    namespace, key, full_key, val = namespace.strip(), key.strip(), full_key.strip(), val.strip()
+                self._parse(metadata_buf)
 
-                    if namespace not in self._md:
-                        self._md[namespace] = OrderedDict()
-                    self._md[namespace][key] = self._coerce(full_key, val)
+    def _initialize_new_metadata(self):
+        self['GUANO|Version'] = '1.0'
+
+    def _parse(self, metadata_str):
+        """Parse metadata and populate our internal mappings"""
+        for line in metadata_str.split('\n'):
+            line = line.strip(WHITESPACE)
+            if not line:
+                continue
+            full_key, val = line.split(':', 1)
+            namespace, key = full_key.split('|', 1) if '|' in full_key else ('', full_key)
+            namespace, key, full_key, val = namespace.strip(), key.strip(), full_key.strip(), val.strip()
+
+            if namespace not in self._md:
+                self._md[namespace] = OrderedDict()
+            self._md[namespace][key] = self._coerce(full_key, val)
+        return self
+
+    @classmethod
+    def from_string(cls, metadata_str):
+        """
+        Create a `GuanoFile` instance from a GUANO metadata string
+
+        :param metadata_str:  a string (or string-like buffer) of GUANO metadata
+        :rtype:  GuanoFile
+        """
+        return GuanoFile()._parse(metadata_str)
 
     @classmethod
     def register(cls, namespace, keys, coerce_function, serialize_function=str):
@@ -211,7 +239,9 @@ class GuanoFile(object):
         :param namespace:  vendor namespace which the keys belong to
         :param keys:  a key or sequence of keys under the specified vendor namespace
         :param coerce_function:  a function for coercing the UTF-8 value to any desired data type
+        :type coerce_function:  callable
         :param serialize_function:  an optional function for serializing the value to UTF-8 string
+        :type serialize_function:  callable
         """
         if isinstance(keys, basestring):
             keys = [keys]
@@ -281,6 +311,7 @@ class GuanoFile(object):
         return self.items('')
 
     def _as_string(self):
+        """Represent the GUANO metadata as a UTF-8 String"""
         lines = []
         for namespace, data in self._md.items():
             for k, v in data.items():
@@ -289,18 +320,39 @@ class GuanoFile(object):
                 lines.append(u'%s: %s' % (k, v))
         return u'\n'.join(lines)
 
+    def serialize(self, pad='\n'):
+        """Serialize the GUANO metadata as UTF-8 encoded bytes"""
+        md_bytes = bytearray(self._as_string(), 'utf-8')
+        if pad is not None and len(md_bytes) % 2:
+            # pad for alignment on even word boundary
+            md_bytes.append(ord(pad))
+        return md_bytes
+
     def write(self, make_backup=True):
-        """Write the GUANO file to disk"""
-        # FIXME: optionally write *other* subchunks for redundant metadata formats
+        """
+        Write the GUANO .WAV file to disk.
+
+        :raises ValueError:  if this `GuanoFile` doesn't represent a valid .WAV by having
+                             appropriate values for `self.wav_params` (see `wavfile.setparams()`)
+                             and `self.wav_data` (see `wavfile.writeframes()`)
+        """
+        # FIXME: optionally write other unknown subchunks for redundant metadata formats
+
+        if not self.filename:
+            raise ValueError('Cannot write .WAV file without a self.filename!')
+        if not self.wav_params:
+            raise ValueError('Cannot write .WAV file without appropriate self.wav_params (see `wavfile.setparams()`)')
+        if not self.wav_params:
+            raise ValueError('Cannot write .WAV file without appropriate self.wav_data (see `wavfile.writeframes()`)')
 
         # prepare our metadata for a byte-wise representation
-        md_bytes = bytearray(self._as_string(), 'utf-8')
-        if len(md_bytes) % 2:
-            md_bytes.append(ord('\n'))  # pad for alignment on even word boundary
+        md_bytes = self.serialize()
 
         # create tempfile and write our vanilla .WAV ('data' sub-chunk only)
         tempfile = NamedTemporaryFile(mode='w+b', prefix='guano_temp-', suffix='.wav', delete=False)
-        shutil.copystat(self.filename, tempfile.name)
+        if os.path.isfile(self.filename):
+            shutil.copystat(self.filename, tempfile.name)
+
         with closing(wave.Wave_write(tempfile)) as wavfile:
             wavfile.setparams(self.wav_params)
             wavfile.writeframes(self.wav_data)
@@ -316,7 +368,7 @@ class GuanoFile(object):
         tempfile.write(struct.pack('<L', total_size - 8))
         tempfile.close()
 
-        # verify it
+        # verify it by re-parsing the new version
         GuanoFile(tempfile.name)
 
         # finally overwrite the original with our new version
