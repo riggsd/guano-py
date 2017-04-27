@@ -348,7 +348,7 @@ class GuanoFile(object):
             raise ValueError('Cannot write .WAV file without a self.filename!')
         if not self.wav_params:
             raise ValueError('Cannot write .WAV file without appropriate self.wav_params (see `wavfile.setparams()`)')
-        if not self.wav_params:
+        if not self.wav_data:
             raise ValueError('Cannot write .WAV file without appropriate self.wav_data (see `wavfile.writeframes()`)')
 
         # prepare our metadata for a byte-wise representation
