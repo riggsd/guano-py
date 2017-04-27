@@ -136,11 +136,13 @@ class GuanoFile(object):
         'Loc Accuracy': int, 'Samplerate': int, 'TE': int,
         'Loc Position': lambda value: tuple(float(v) for v in value.split()),
         'Timestamp': parse_timestamp,
+        'Note': lambda value: value.replace('\\n', '\n'),
     }
     _serialization_rules = {
         'Loc Position': lambda value: '%f %f' % value,
         'Timestamp': lambda value: value.isoformat() if value else '',
-        'Length': lambda value: '%.2f' % value
+        'Length': lambda value: '%.2f' % value,
+        'Note': lambda value: value.replace('\n', '\\n')
     }
 
     def __init__(self, filename=None):
@@ -292,7 +294,10 @@ class GuanoFile(object):
         return namespace in self._md and key in self._md[namespace]
 
     def get_namespaces(self):
-        """Get list of all namespaces represented by this metadata"""
+        """
+        Get list of all namespaces represented by this metadata.
+        This includes the 'GUANO' namespace, and the '' (empty string) namespace for well-known fields.
+        """
         return self._md.keys()
 
     def items(self, namespace=None):
@@ -377,8 +382,8 @@ class GuanoFile(object):
         # verify it by re-parsing the new version
         GuanoFile(tempfile.name)
 
-        # finally overwrite the original with our new version
-        if make_backup:
+        # finally overwrite the original with our new version (and optionally back up first)
+        if make_backup and os.path.exists(self.filename):
             backup_dir = os.path.join(os.path.dirname(self.filename), 'GUANO_BACKUP')
             backup_file = os.path.join(backup_dir, os.path.basename(self.filename))
             if not os.path.isdir(backup_dir):
