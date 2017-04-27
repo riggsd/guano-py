@@ -172,7 +172,7 @@ def wamd2guano(fname):
     for k, v in wamd_md.items():
         gfile['WAC', k] = v
 
-    print gfile._as_string()
+    print gfile.to_string()
 
     gfile.write()
 

@@ -16,7 +16,7 @@ def dump(fname):
     print
     print fname
     gfile = GuanoFile(fname)
-    print gfile._as_string()
+    print gfile.to_string()
 
 
 if __name__ == '__main__':

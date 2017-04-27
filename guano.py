@@ -7,7 +7,7 @@ for representing bat acoustics data.
 """
 
 
-__version__ = '0.0.5'
+__version__ = '0.0.6dev'
 
 
 import os
@@ -82,6 +82,10 @@ class tzoffset(tzinfo):
 def parse_timestamp(s):
     """Parse a string in supported subset of ISO 8601 / RFC 3331 format to tz-naive local `datetime`"""
     # Python's standard library does an awful job of parsing ISO timestamps, so we do it manually
+
+    #if s is None or not s.strip():
+    #    return None
+
     timestamp, tz = None, None
 
     s = s.replace(' ', 'T', 1)  # support using space rather than 'T' as date/time delimiter
@@ -135,7 +139,7 @@ class GuanoFile(object):
     }
     _serialization_rules = {
         'Loc Position': lambda value: '%f %f' % value,
-        'Timestamp': lambda value: value.isoformat(),
+        'Timestamp': lambda value: value.isoformat() if value else '',
         'Length': lambda value: '%.2f' % value
     }
 
@@ -151,14 +155,14 @@ class GuanoFile(object):
             self._initialize_new_metadata()
 
     def _coerce(self, key, value):
-        """Coerce a value from its UTF-8 representation to a specific data type"""
+        """Coerce a value from its Unicode representation to a specific data type"""
         if key in self._coersion_rules:
             return self._coersion_rules[key](value)
         return value  # UTF-8 string
 
     def _serialize(self, key, value):
-        """Serialize a value from its real representation to GUANO UTF-8 representation"""
-        serialize = self._serialization_rules.get(key, str)
+        """Serialize a value from its real representation to GUANO Unicode representation"""
+        serialize = self._serialization_rules.get(key, unicode)
         return serialize(value)
 
     def _load(self):
@@ -208,6 +212,8 @@ class GuanoFile(object):
 
     def _parse(self, metadata_str):
         """Parse metadata and populate our internal mappings"""
+        if not isinstance(metadata_str, unicode):
+            metadata_str = metadata_str.decode('utf-8')
         for line in metadata_str.split('\n'):
             line = line.strip(WHITESPACE)
             if not line:
@@ -310,8 +316,8 @@ class GuanoFile(object):
         """Iterate over (key, value) for all the well-known (defined) fields"""
         return self.items('')
 
-    def _as_string(self):
-        """Represent the GUANO metadata as a UTF-8 String"""
+    def to_string(self):
+        """Represent the GUANO metadata as a Unicode String"""
         lines = []
         for namespace, data in self._md.items():
             for k, v in data.items():
@@ -322,7 +328,7 @@ class GuanoFile(object):
 
     def serialize(self, pad='\n'):
         """Serialize the GUANO metadata as UTF-8 encoded bytes"""
-        md_bytes = bytearray(self._as_string(), 'utf-8')
+        md_bytes = bytearray(self.to_string(), 'utf-8')
         if pad is not None and len(md_bytes) % 2:
             # pad for alignment on even word boundary
             md_bytes.append(ord(pad))

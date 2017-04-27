@@ -127,7 +127,7 @@ def sonobat2guano(fname):
         for k, v in sb_md['ar125'].items():
             gfile['BAT', k] = v
 
-    print gfile._as_string()
+    print gfile.to_string()
 
     gfile.write()
 

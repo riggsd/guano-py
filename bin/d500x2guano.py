@@ -105,7 +105,7 @@ def d500x2guano(fname):
     for k, v in md.items():
         gfile['PET', k] = v
 
-    print gfile._as_string()
+    print gfile.to_string()
 
     gfile.wav_data = gfile.wav_data[D500X_DATA_SKIP_BYTES:]  # throw out the metadata bytes from 'data' chunk
 
