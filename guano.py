@@ -80,11 +80,11 @@ class tzoffset(tzinfo):
 
 
 def parse_timestamp(s):
-    """Parse a string in supported subset of ISO 8601 / RFC 3331 format to tz-naive local `datetime`"""
+    """Parse a string in supported subset of ISO 8601 / RFC 3331 format to `datetime`"""
     # Python's standard library does an awful job of parsing ISO timestamps, so we do it manually
 
-    #if s is None or not s.strip():
-    #    return None
+    if s is None or not s.strip():
+        return None
 
     timestamp, tz = None, None
 
@@ -133,7 +133,8 @@ class GuanoFile(object):
 
     _coersion_rules = {
         'GUANO|Version': float, 'Filter HP': float, 'Length': float, 'Loc Elevation': float,
-        'Loc Accuracy': int, 'Samplerate': int, 'TE': int,
+        'Loc Accuracy': int, 'Samplerate': int,
+        'TE': lambda value: int(value) if value else 1,
         'Loc Position': lambda value: tuple(float(v) for v in value.split()),
         'Timestamp': parse_timestamp,
         'Note': lambda value: value.replace('\\n', '\n'),
@@ -223,7 +224,8 @@ class GuanoFile(object):
             full_key, val = line.split(':', 1)
             namespace, key = full_key.split('|', 1) if '|' in full_key else ('', full_key)
             namespace, key, full_key, val = namespace.strip(), key.strip(), full_key.strip(), val.strip()
-
+            if not key:
+                 continue
             if namespace not in self._md:
                 self._md[namespace] = OrderedDict()
             self._md[namespace][key] = self._coerce(full_key, val)

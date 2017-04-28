@@ -38,13 +38,13 @@ class UnicodeTest(unittest.TestCase):
 
 class GeneralTest(unittest.TestCase):
 
-    MD = r"""GUANO|Version: 1.0
+    MD = r'''GUANO|Version: 1.0
     Timestamp: 2017-04-20T01:23:45-07:00
     Note: This is a \nmultiline text note\nfor testing.
     User|Haiku: five\nseven\nfive
     User|Answer: 42
     MSFT|Transect|Version: 1.0.16
-    """
+    '''
 
     def setUp(self):
         GuanoFile.register('User', 'Answer', int)
@@ -52,17 +52,47 @@ class GeneralTest(unittest.TestCase):
         self.md = GuanoFile.from_string(self.MD)
 
     def test_get_namespaces(self):
+        """Test that we can extract namespaces"""
         expected = {'GUANO', '', 'User', 'MSFT'}
         namespaces = set(self.md.get_namespaces())
         self.assertSetEqual(expected, namespaces)
 
     def test_get_types(self):
+        """Test multiple ways of requesting a namespaced value"""
         self.assertEqual(42, self.md['User|Answer'])
         self.assertEqual(42, self.md['User', 'Answer'])
         self.assertEqual(42, self.md.get('User|Answer'))
 
     def test_multiline(self):
+        """Ensure multiline string `Note` is parsed as `\n` containing string"""
         self.assertEqual(3, len(self.md['Note'].splitlines()))
+
+
+class BadDataTest(unittest.TestCase):
+    """
+    These are hacks that may go against the specification, done in the name of permissive reading.
+    """
+
+    def test_sb41_bad_te(self):
+        """SonoBat 4.1 "optional" TE value"""
+        md = '''GUANO|Version: 1.0
+        TE:
+        '''
+        GuanoFile.from_string(md)
+
+    def test_sb41_bad_key(self):
+        """SonoBat 4.1 disembodied colon"""
+        md = '''GUANO|Version: 1.0
+        :
+        '''
+        self.assertEqual(1, len(list(GuanoFile.from_string(md).items())))
+
+    def test_sb42_bad_timestamp(self):
+        """SonoBat 4.2 blank timestamp"""
+        md = '''GUANO|Version: 1.0
+        Timestamp:
+        '''
+        GuanoFile.from_string(md)
 
 
 if __name__ == '__main__':
