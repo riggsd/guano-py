@@ -12,7 +12,7 @@ Import this Python module as::
 """
 
 
-__version__ = '0.0.6dev'
+__version__ = '0.0.6'
 
 
 import os
