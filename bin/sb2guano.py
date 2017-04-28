@@ -7,6 +7,8 @@ usage::
     $> sb2guano.py WAVFILE...
 """
 
+from __future__ import print_function
+
 import sys
 import os
 import os.path
@@ -103,10 +105,10 @@ def extract_sonobat_metadata(fname):
 
 def sonobat2guano(fname):
     """Convert a file with Sonobat metadata to GUANO metadata"""
-    print '\n', fname
+    print('\n', fname)
     sb_md = extract_sonobat_metadata(fname)
     if not sb_md:
-        print >> sys.stderr, 'Skipping non-Sonobat file: ' + fname
+        print('Skipping non-Sonobat file: ' + fname, file=sys.stderr)
         return False
     pprint(sb_md)
 
@@ -129,7 +131,7 @@ def sonobat2guano(fname):
         for k, v in sb_md['ar125'].items():
             gfile['BAT', k] = v
 
-    print gfile.to_string()
+    print(gfile.to_string())
 
     gfile.write()
 
@@ -138,7 +140,7 @@ if __name__ == '__main__':
     from glob import glob
 
     if len(sys.argv) < 2:
-        print >> sys.stderr, 'usage: %s FILE...' % os.path.basename(sys.argv[0])
+        print('usage: %s FILE...' % os.path.basename(sys.argv[0]), file=sys.stderr)
         sys.exit(2)
 
     if os.name == 'nt' and '*' in sys.argv[1]:
