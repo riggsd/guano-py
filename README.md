@@ -32,6 +32,8 @@ developer mode to hack on it yourself::
     $> cd guano-py
     $> python setup.py develop
 
+[![Build Status](https://travis-ci.org/riggsd/guano-py.svg?branch=master)](https://travis-ci.org/riggsd/guano-py)
+
 
 API Usage
 =========
