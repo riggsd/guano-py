@@ -1,11 +1,15 @@
-This is the Python reference implementation for GUANO, the "Grand Unified
-Acoustic Notation Ontology", a metadata format for bat acoustics recordings.
+guano-py
+========
 
-It includes a simple Python module with support for reading and writing
-GUANO metadata.
+This is the [Python](http://python.org) reference implementation for [GUANO](http://guano-md.org),
+the "Grand Unified Acoustic Notation Ontology", a metadata format for bat acoustics recordings. It
+includes a production-ready Python module with full support for reading and writing
+GUANO metadata, as well as several helpful commandline utilities.
 
-The actual preliminary GUANO specification can be found at 
-[doc/guano_specification.md](doc/guano_specification.md).
+For more information about GUANO metadata itself, including the format specification, see the
+GUANO project homepage: http://guano-md.org
+
+Documentation for guano-py can be found at: http://guano-py.readthedocs.io
 
 
 Requirements
@@ -32,7 +36,7 @@ developer mode to hack on it yourself::
     $> cd guano-py
     $> python setup.py develop
 
-[![Build Status](https://travis-ci.org/riggsd/guano-py.svg?branch=master)](https://travis-ci.org/riggsd/guano-py)
+[![Build Status](https://travis-ci.org/riggsd/guano-py.svg?branch=master)](https://travis-ci.org/riggsd/guano-py) [![Documentation Status](https://readthedocs.org/projects/guano-py/badge/?version=latest)](http://guano-py.readthedocs.io/en/latest/?badge=latest)
 
 
 API Usage
