@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 """
-Disperse files by moving them into folders by species label.
+"Disperse" files by moving them into folders according to their species label.
 
-usage:  disperse.py ROOTDIR
+The `Species Manual ID` field will be preferred over `Species Auto ID`.
+
+usage::
+
+    $> disperse.py ROOTDIR
 """
 
-# TODO: add options to copy vs move; distinguish between Manual / Auto ID
+# TODO: add options to copy vs move; distinguish between Manual / Auto ID; un-disperse
 
 import os
 import os.path

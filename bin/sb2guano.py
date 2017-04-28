@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 """
-Convert files with Sonobat-format metadata to use GUANO metadata.
+Convert files with SonoBat-format metadata to use GUANO metadata instead.
 
-usage: sb2guano.py WAVFILE...
+usage::
+
+    $> sb2guano.py WAVFILE...
 """
 
 import sys

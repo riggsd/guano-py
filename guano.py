@@ -4,6 +4,11 @@ This is the Python reference implementation for reading and writing GUANO metada
 
 GUANO is the "Grand Unified Acoustic Notation Ontology", an extensible metadata format
 for representing bat acoustics data.
+
+Import this Python module as::
+
+    import guano
+
 """
 
 
@@ -80,7 +85,7 @@ class tzoffset(tzinfo):
 
 
 def parse_timestamp(s):
-    """Parse a string in supported subset of ISO 8601 / RFC 3331 format to `datetime`"""
+    """Parse a string in supported subset of ISO 8601 / RFC 3331 format to :class:`datetime.datetime`"""
     # Python's standard library does an awful job of parsing ISO timestamps, so we do it manually
 
     if s is None or not s.strip():
@@ -110,25 +115,25 @@ class GuanoFile(object):
     """
     An abstraction of a .WAV file with GUANO metadata.
 
-    A `GuanoFile` object behaves like a normal Python `dict`, where keys can either be well-known
-    metadata keys, namespaced keys, or a tuple of (namespace, key).
+    A `GuanoFile` object behaves like a normal Python :class:`dict`, where keys can either be
+    well-known metadata keys, namespaced keys, or a tuple of (namespace, key).
 
     Well-known keys will have their values coerced into the correct data type. The parser may be
-    configured to coerce new namespaced keys with the `register()` function.
+    configured to coerce new namespaced keys with the :func:`register()` function.
 
-    Example usage:
+    Example usage::
 
         gfile = GuanoFile('myfile.wav')
         print gfile['GUANO|Version']
         >>> 1.0
         gfile['Species Manual ID'] = 'Mylu'
-        gfile['Comment'] = 'I love GUANO!'
+        gfile['Note'] = 'I love GUANO!'
         gfile.write()
 
-    While reading, writing, and editing .WAV files is the target usage, this class may also be
-    used completely separate from the .WAV file format. GUANO metadata can be written into an
+    Though reading, writing, and editing .WAV files is the target usage, this class may also be
+    used independent from the .WAV file format. GUANO metadata can be written into an
     Anabat-format file or to a sidecar file, for example, by populating a `GuanoFile` object and
-    then using the `serialize()` method to produce correctly formatted UTF-8 encoded metadata.
+    then using the :func:`serialize()` method to produce correctly formatted UTF-8 encoded metadata.
     """
 
     _coersion_rules = {
@@ -161,7 +166,7 @@ class GuanoFile(object):
         """Coerce a value from its Unicode representation to a specific data type"""
         if key in self._coersion_rules:
             return self._coersion_rules[key](value)
-        return value  # UTF-8 string
+        return value  # default should already be a Unicode string
 
     def _serialize(self, key, value):
         """Serialize a value from its real representation to GUANO Unicode representation"""
@@ -234,7 +239,7 @@ class GuanoFile(object):
     @classmethod
     def from_string(cls, metadata_str):
         """
-        Create a `GuanoFile` instance from a GUANO metadata string
+        Create a :class:`GuanoFile` instance from a GUANO metadata string
 
         :param metadata_str:  a string (or string-like buffer) of GUANO metadata
         :rtype:  GuanoFile
@@ -324,7 +329,7 @@ class GuanoFile(object):
         return self.items('')
 
     def to_string(self):
-        """Represent the GUANO metadata as a Unicode String"""
+        """Represent the GUANO metadata as a Unicode string"""
         lines = []
         for namespace, data in self._md.items():
             for k, v in data.items():
@@ -346,8 +351,8 @@ class GuanoFile(object):
         Write the GUANO .WAV file to disk.
 
         :raises ValueError:  if this `GuanoFile` doesn't represent a valid .WAV by having
-                             appropriate values for `self.wav_params` (see `wavfile.setparams()`)
-                             and `self.wav_data` (see `wavfile.writeframes()`)
+            appropriate values for `self.wav_params` (see :meth:`wave.Wave_write.setparams()`)
+            and `self.wav_data` (see :meth:`wave.Wave_write.writeframes()`)
         """
         # FIXME: optionally write other unknown subchunks for redundant metadata formats
 

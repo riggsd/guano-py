@@ -2,7 +2,9 @@
 """
 Convert files from the Elekon BatLogger to use GUANO metadata instead.
 
-usage: batlogger2guano.py WAVFILE...
+usage::
+
+    $> batlogger2guano.py WAVFILE...
 """
 
 import sys, os, os.path

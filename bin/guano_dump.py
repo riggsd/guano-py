@@ -1,8 +1,10 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 """
-Print the GUANO metadata from a file or files.
+Print the GUANO metadata found in a file or files.
 
-usage: guano_dump.py WAVFILE...
+usage::
+
+    $> guano_dump.py WAVFILE...
 """
 
 import sys

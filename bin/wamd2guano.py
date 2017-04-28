@@ -1,8 +1,10 @@
 #!/usr/bin/python
 """
-Convert Wildlife Acoustics WAMD metadata files to GUANO metadata.
+Convert Wildlife Acoustics WAMD metadata files to use GUANO metadata instead.
 
-usage: wamd2guano.py WAVFILE...
+usage::
+
+    $> wamd2guano.py WAVFILE...
 """
 
 import os
@@ -170,7 +172,7 @@ def wamd2guano(fname):
         gfile['Loc Elevation'] = alt
 
     for k, v in wamd_md.items():
-        gfile['WAC', k] = v
+        gfile['WA', k] = v
 
     print gfile.to_string()
 

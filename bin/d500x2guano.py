@@ -2,7 +2,9 @@
 """
 Convert files with raw D500X metadata to use GUANO metadata instead.
 
-usage: d500x2guano.py WAVFILE...
+usage::
+
+    $> d500x2guano.py WAVFILE...
 """
 
 import sys
