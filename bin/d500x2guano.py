@@ -51,19 +51,19 @@ def extract_d500x_metadata(fname):
                 return None
 
             md['Samplerate'] = struct.unpack_from('< i', mmfile, 0x18)[0]
-            md['File Name'] = mmfile[0xD0:0xD0+10].decode('ascii')
-            md['File Time'] = mmfile[0xE0:0xE0+15].decode('ascii')
-            md['FW Version'] = mmfile[0xF0:0xF0+32].strip(b'\0 ').decode('ascii')
-            profile_settings_1 = mmfile[0x120:0x120+20].strip(b'\0 ').decode('ascii')
-            profile_settings_2 = mmfile[0x138:0x138+16].strip(b'\0 ').decode('ascii')
+            md['File Name'] = mmfile[0xD0:0xD0+10].decode('latin-1')
+            md['File Time'] = mmfile[0xE0:0xE0+15].decode('latin-1')
+            md['FW Version'] = mmfile[0xF0:0xF0+32].strip(b'\0 ').decode('latin-1')
+            profile_settings_1 = mmfile[0x120:0x120+20].strip(b'\0 ').decode('latin-1')
+            profile_settings_2 = mmfile[0x138:0x138+16].strip(b'\0 ').decode('latin-1')
             for tok in (profile_settings_1 + ' ' + profile_settings_2).split():
                 k, v = tok.split('=', 1)
                 md['Profile ' + k] = v
             # TODO:  0x150 - 0x157 ?
-            md['Profile Name'] = mmfile[0x158:0x158+8].strip(b'\0\xFF ').decode('ascii')
+            md['Profile Name'] = mmfile[0x158:0x158+8].strip(b'\0\xFF ').decode('latin-1')
 
             # block from 0x200 - 0x400 is a big '\r\n' delimited string. 2.0+ firmware only
-            extra_md_block = mmfile[0x200:0x400].strip().decode('ascii')
+            extra_md_block = mmfile[0x200:0x400].strip().decode('latin-1')
             if extra_md_block:
                 for line in extra_md_block.splitlines():
                     if not line.strip('\0 '):
@@ -96,6 +96,7 @@ def d500x2guano(fname):
     gfile['Make'] = 'Pettersson'
     gfile['Model'] = 'D500X'
     gfile['Timestamp'] = md.pop('File Time')
+    gfile['Original Filename'] = md.pop('File Name')
     gfile['Samplerate'] = md.pop('Samplerate')
     gfile['Length'] = md.pop('Length')
 

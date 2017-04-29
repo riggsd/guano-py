@@ -57,6 +57,7 @@ def batlogger2guano(fname):
     # for k, v in g.items():
     #     print('%s:\t%s' % (k, v))
 
+    print(g.to_string())
     g.write()
     os.remove(xmlfname)
 

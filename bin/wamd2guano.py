@@ -61,6 +61,11 @@ WAMD_COERCE = {
 }
 
 
+def _parse_text(value):
+    """Default coercion function which assumes text is UTF-8 encoded"""
+    return value.decode('utf-8')
+
+
 def _parse_wamd_timestamp(timestamp):
     """WAMD timestamps are one of these known formats:
     2014-04-02 22:59:14-05:00
@@ -68,6 +73,8 @@ def _parse_wamd_timestamp(timestamp):
     2014-04-02 22:59:14
     Produces a `datetime.datetime`.
     """
+    if isinstance(timestamp, bytes):
+        timestamp = timestamp.decode('utf-8')
     if len(timestamp) == 25:
         dt, offset = timestamp[:-6], timestamp[19:]
         tz = tzoffset(offset)
@@ -90,6 +97,8 @@ def _parse_wamd_gps(gpsfirst):
     """
     if not gpsfirst:
         return None
+    if isinstance(gpsfirst, bytes):
+        gpsfirst = gpsfirst.decode('utf-8')
     vals = tuple(val.strip() for val in gpsfirst.split(','))
     datum, vals = vals[0], vals[1:]
     if vals[1] in ('N', 'S'):
@@ -111,9 +120,9 @@ def wamd(fname):
     """Extract WAMD metadata from a .WAV file as a dict"""
     with open(fname, 'rb') as f:
         ch = chunk.Chunk(f, bigendian=False)
-        if ch.getname() != 'RIFF':
+        if ch.getname() != b'RIFF':
             raise Exception('%s is not a RIFF file!' % fname)
-        if ch.read(4) != 'WAVE':
+        if ch.read(4) != b'WAVE':
             raise Exception('%s is not a WAVE file!' % fname)
 
         wamd_chunk = None
@@ -122,7 +131,7 @@ def wamd(fname):
                 subch = chunk.Chunk(ch, bigendian=False)
             except EOFError:
                 break
-            if subch.getname() == 'wamd':
+            if subch.getname() == b'wamd':
                 wamd_chunk = subch
                 break
             else:
@@ -140,7 +149,7 @@ def wamd(fname):
             val = struct.unpack_from('< %ds' % len, buf, offset+6)[0]
             if id not in WAMD_DROP_IDS:
                 name = WAMD_IDS.get(id, id)
-                val = WAMD_COERCE.get(name, str)(val)
+                val = WAMD_COERCE.get(name, _parse_text)(val)
                 metadata[name] = val
             offset += 6 + len
         return metadata
@@ -198,7 +207,9 @@ def main():
         try:
             wamd2guano(fname)
         except Exception as e:
-            print(e, file=sys.stderr)
+            import traceback
+            traceback.print_exc()
+            #print(e, file=sys.stderr)
         print()
 
 

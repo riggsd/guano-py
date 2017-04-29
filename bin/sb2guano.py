@@ -23,7 +23,7 @@ from guano import GuanoFile
 
 
 # regex for parsing Sonobat metadata
-SB_MD_REGEX = re.compile(r'MMMMMMMMM(?P<sb_md>[\w\W]+)MMMMMMMMM')
+SB_MD_REGEX = re.compile(b'MMMMMMMMM(?P<sb_md>[\w\W]+)MMMMMMMMM')
 SB_FREQ_REGEX = re.compile(r'\(#([\d]+)#\)')
 SB_TE_REGEX = re.compile(r'<&([\d]*)&>')
 SB_DFREQ_REGEX = re.compile(r'\[!([\w]+)!\]')
@@ -55,39 +55,62 @@ SB_FILENAME_FORMATS = [
 ]
 
 
+def _decode_text(text):
+    """
+    SonoBat uses the system locale for encoding text, so we have to guess what it might have been.
+    Try Mac_Roman first if we're running on OS X, otherwise default to Windows 1252. Yuck.
+    """
+    encodings = ['windows-1252', 'latin-1']
+    encodings.insert(0 if sys.platform == 'darwin' else 1, 'mac_roman')
+    for encoding in encodings:
+        try:
+            return text.decode(encoding)
+        except:
+            pass
+    raise ValueError('Unable to decode native SonoBat text!')
+
+
+def _parse_sonobat_metadata(md):
+    """Parse Sonobat-format metadata string as a dict"""
+    sb_md = dict()
+    sb_md['samplerate'] = int(re.search(SB_FREQ_REGEX, md).groups()[0])
+    sb_md['te'] = int(re.search(SB_TE_REGEX, md).groups()[0])
+    sb_md['dfreq'] = re.search(SB_DFREQ_REGEX, md).groups()[0]
+    note = md.split('!]', 1)[1]
+
+    # If this file was created with Sonobat D500X Attributer, parse out D500X metadata
+    match = re.search(D500X_ATTRIBUTE_REGEX, note)
+    if match and match.group('d500x').count(',') == 8:
+        fw, f, pre, len, hp, a, ts, timestamp, sn = match.group('d500x').split(',')
+        f, pre, len, hp, a, ts, sn = tuple(s.split('=',1)[1].strip() for s in (f, pre, len, hp, a, ts, sn))
+        sb_md['d500x'] = dict(Firmware=fw, F=f, PRE=pre, LEN=len, HP=hp, A=a, TS=ts, Timestamp=timestamp, Serial=sn)
+
+    # Binary Acoustic AR125 stuffs metadata into Sonobat note
+    match = re.search(AR125_ATTRIBUTE_REGEX, note)
+    if match:
+        dev, dc, utc, ltb, cmt = match.group('ar125').split(',', 4)
+        dev, dc, utc, ltb, cmt = tuple(s.split('=',1)[1].strip() for s in (dev, dc, utc, ltb, cmt))
+        cmt = cmt.strip('<>')
+        sb_md['ar125'] = dict(DEV=dev, DC=dc, UTC=utc, LTB=ltb, CMT=cmt)
+
+    sb_md['note'] = note
+
+    return sb_md
+
+
 def extract_sonobat_metadata(fname):
     """Extract Sonobat-format metadata as a dict"""
-    sb_md = {}
 
-    # parse the Sonobat metadata itself
+    # parse the Sonobat metadata itself from file
     with open(fname, 'rb') as infile:
         with closing(mmap.mmap(infile.fileno(), 0, access=mmap.ACCESS_READ)) as mmfile:
             md_match = re.search(SB_MD_REGEX, mmfile)
             if not md_match:
-                print >> sys.stderr, 'No Sonobat metadata found in file: ' + fname
+                print('No Sonobat metadata found in file: ' + fname, file=sys.stderr)
                 return None
             md = md_match.groups()[0]
-            sb_md['samplerate'] = int(re.search(SB_FREQ_REGEX, md).groups()[0])
-            sb_md['te'] = int(re.search(SB_TE_REGEX, md).groups()[0])
-            sb_md['dfreq'] = re.search(SB_DFREQ_REGEX, md).groups()[0]
-            note = md.split('!]', 1)[1]
-
-            # If this file was created with Sonobat D500X Attributer, parse out D500X metadata
-            match = re.search(D500X_ATTRIBUTE_REGEX, note)
-            if match and match.group('d500x').count(',') == 8:
-                fw, f, pre, len, hp, a, ts, timestamp, sn = match.group('d500x').split(',')
-                f, pre, len, hp, a, ts, sn = tuple(s.split('=',1)[1].strip() for s in (f, pre, len, hp, a, ts, sn))
-                sb_md['d500x'] = dict(Firmware=fw, F=f, PRE=pre, LEN=len, HP=hp, A=a, TS=ts, Timestamp=timestamp, Serial=sn)
-
-            # Binary Acoustic AR125 stuffs metadata into Sonobat note
-            match = re.search(AR125_ATTRIBUTE_REGEX, note)
-            if match:
-                dev, dc, utc, ltb, cmt = match.group('ar125').split(',', 4)
-                dev, dc, utc, ltb, cmt = tuple(s.split('=',1)[1].strip() for s in (dev, dc, utc, ltb, cmt))
-                cmt = cmt.strip('<>')
-                sb_md['ar125'] = dict(DEV=dev, DC=dc, UTC=utc, LTB=ltb, CMT=cmt)
-
-            sb_md['note'] = note
+            md = _decode_text(md)
+            sb_md = _parse_sonobat_metadata(md)
 
     with closing(wave.open(fname)) as wavfile:
         duration_s = wavfile.getnframes() / float(wavfile.getframerate())
