@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 This is the Python reference implementation for reading and writing GUANO metadata.
 
@@ -11,9 +10,7 @@ Import this Python module as::
 
 """
 
-
-__version__ = '0.0.6'
-
+from __future__ import print_function
 
 import os
 import sys
@@ -29,6 +26,12 @@ from collections import OrderedDict, namedtuple
 from base64 import standard_b64encode as base64encode
 from base64 import standard_b64decode as base64decode
 
+if sys.version_info[0] > 2:
+    unicode = str
+    basestring = str
+
+
+__version__ = '0.0.7dev'
 
 __all__ = 'GuanoFile',
 
@@ -182,7 +185,7 @@ class GuanoFile(object):
                 if len(mmfile) < 8:
                     raise ValueError('File too small to contain valid RIFF "WAVE" header (size %d bytes)' % len(mmfile))
                 chunk = struct.unpack_from('> 4s', mmfile, 0x08)[0]
-                if chunk != 'WAVE':
+                if chunk != b'WAVE':
                     raise ValueError('Expected RIFF chunk "WAVE" at 0x08, but found "%s"' % repr(chunk))
 
                 try:
@@ -198,9 +201,9 @@ class GuanoFile(object):
                     offset += 4
                     size = struct.unpack_from('< I', mmfile, offset)[0]
                     offset += 4
-                    if subchunk == 'guan':
+                    if subchunk == b'guan':
                         metadata_buf = mmfile[offset:offset+size]
-                    elif subchunk == 'data':
+                    elif subchunk == b'data':
                         self.wav_data = mmfile[offset:offset+size]
                     if size % 2:
                         offset += 1  # align to 16-bit boundary
@@ -266,7 +269,7 @@ class GuanoFile(object):
             cls._serialization_rules[full_key] = serialize_function
 
     def __getitem__(self, item):
-        if type(item) == tuple:
+        if isinstance(item, tuple):
             namespace, key = item[0], item[1]
         elif '|' in item:
             namespace, key = item.split('|', 1)
@@ -281,7 +284,7 @@ class GuanoFile(object):
             return default
 
     def __setitem__(self, key, value):
-        if type(key) == tuple:
+        if isinstance(key, tuple):
             namespace, key = key[0], key[1]
         elif '|' in key:
             namespace, key = key.split('|', 1)
@@ -292,7 +295,7 @@ class GuanoFile(object):
         self._md[namespace][key] = value
 
     def __contains__(self, item):
-        if type(item) == tuple:
+        if isinstance(item, tuple):
             namespace, key = item[0], item[1]
         elif '|' in item:
             namespace, key = item.split('|', 1)
@@ -377,7 +380,7 @@ class GuanoFile(object):
 
         # add the 'guan' sub-chunk after the 'data' sub-chunk
         tempfile.seek(tempfile.tell())
-        tempfile.write(struct.pack('<4sL', 'guan', len(md_bytes)))
+        tempfile.write(struct.pack('<4sL', b'guan', len(md_bytes)))
         tempfile.write(md_bytes)
 
         # fix the RIFF file length
@@ -394,33 +397,9 @@ class GuanoFile(object):
             backup_dir = os.path.join(os.path.dirname(self.filename), 'GUANO_BACKUP')
             backup_file = os.path.join(backup_dir, os.path.basename(self.filename))
             if not os.path.isdir(backup_dir):
-                print >> sys.stderr, 'Creating backup dir: ' + backup_dir
+                print('Creating backup dir: ' + backup_dir, file=sys.stderr)
                 os.mkdir(backup_dir)
             if os.path.exists(backup_file):
                 os.remove(backup_file)
             os.rename(self.filename, backup_file)
         os.rename(tempfile.name, self.filename)
-
-
-if __name__ == '__main__':
-    from pprint import pprint
-
-    if len(sys.argv) < 2:
-        print >> sys.stderr, 'usage: guano.py FILENAME...'
-        sys.exit(2)
-
-    # the following is an example of how to register a few namespaced keys with data type coercion
-    GuanoFile.register('SB', ['DiscrProb', 'MeanTBC'], float)
-    GuanoFile.register('Anabat', ['Humidity', 'Temperature'], float)
-    GuanoFile.register('Anabat', 'Start', parse_timestamp, lambda x: x.isoformat())
-
-    for fname in sys.argv[1:]:
-        print '\n' + fname
-        guanofile = GuanoFile(fname)
-        pprint(guanofile._md)
-
-        for k, v in guanofile.items():
-            print '%s:  %s' % (k, v)
-
-        if 'GUANO|Version' in guanofile:
-            print '\nValid GUANO file, version %s' % guanofile['GUANO|Version']

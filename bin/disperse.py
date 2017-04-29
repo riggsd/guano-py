@@ -11,6 +11,8 @@ usage::
 
 # TODO: add options to copy vs move; distinguish between Manual / Auto ID; un-disperse
 
+from __future__ import print_function
+
 import os
 import os.path
 from glob import glob
@@ -34,14 +36,14 @@ def disperse(rootdir):
     for fname in glob(os.path.join(rootdir, '*.wav')):
         species = get_species(fname)
         if not species:
-            print 'Skipping file without species %s .' % fname
+            print('Skipping file without species %s .' % fname)
             continue
         destination = os.path.join(rootdir, species)
         if not os.path.isdir(destination):
-            print 'Creating directory %s ...' % destination
+            print('Creating directory %s ...' % destination)
             os.mkdir(destination)
         new_fname = os.path.join(destination, os.path.basename(fname))
-        print '%s -> %s ...' % (fname, new_fname)
+        print('%s -> %s ...' % (fname, new_fname))
         os.rename(fname, new_fname)
 
 

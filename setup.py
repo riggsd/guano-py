@@ -1,4 +1,5 @@
 from setuptools import setup
+from glob import glob
 
 from guano import __version__
 
@@ -13,12 +14,14 @@ setup(
     author='David A. Riggs',
     author_email='driggs@myotisoft.com',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
+        'Intended Audience :: Science/Research',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
     ],
-    keywords='bats acoustics metadata',
+    keywords='bats acoustics metadata guano',
     py_modules=['guano'],
-    scripts=['bin/sb2guano.py'],
+    scripts=glob('bin/*.py'),
 )

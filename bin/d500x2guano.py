@@ -7,6 +7,8 @@ usage::
     $> d500x2guano.py WAVFILE...
 """
 
+from __future__ import print_function
+
 import sys
 import os
 import os.path
@@ -44,24 +46,24 @@ def extract_d500x_metadata(fname):
     md = {}
     with open(fname, 'rb') as infile:
         with closing(mmap.mmap(infile.fileno(), 0, access=mmap.ACCESS_READ)) as mmfile:
-            if mmfile[0xF0:0xF0+5] != 'D500X':
-                print >> sys.stderr, 'No D500X metadata found in file: ' + fname
+            if mmfile[0xF0:0xF0+5] != b'D500X':
+                print('No D500X metadata found in file: ' + fname, file=sys.stderr)
                 return None
 
             md['Samplerate'] = struct.unpack_from('< i', mmfile, 0x18)[0]
-            md['File Name'] = mmfile[0xD0:0xD0+10]
-            md['File Time'] = mmfile[0xE0:0xE0+15]
-            md['FW Version'] = mmfile[0xF0:0xF0+32].strip('\0 ')
-            profile_settings_1 = mmfile[0x120:0x120+20].strip('\0 ')
-            profile_settings_2 = mmfile[0x138:0x138+16].strip('\0 ')
+            md['File Name'] = mmfile[0xD0:0xD0+10].decode('latin-1')
+            md['File Time'] = mmfile[0xE0:0xE0+15].decode('latin-1')
+            md['FW Version'] = mmfile[0xF0:0xF0+32].strip(b'\0 ').decode('latin-1')
+            profile_settings_1 = mmfile[0x120:0x120+20].strip(b'\0 ').decode('latin-1')
+            profile_settings_2 = mmfile[0x138:0x138+16].strip(b'\0 ').decode('latin-1')
             for tok in (profile_settings_1 + ' ' + profile_settings_2).split():
                 k, v = tok.split('=', 1)
                 md['Profile ' + k] = v
             # TODO:  0x150 - 0x157 ?
-            md['Profile Name'] = mmfile[0x158:0x158+8].strip('\0\xFF ')
+            md['Profile Name'] = mmfile[0x158:0x158+8].strip(b'\0\xFF ').decode('latin-1')
 
             # block from 0x200 - 0x400 is a big '\r\n' delimited string. 2.0+ firmware only
-            extra_md_block = mmfile[0x200:0x400].strip()
+            extra_md_block = mmfile[0x200:0x400].strip().decode('latin-1')
             if extra_md_block:
                 for line in extra_md_block.splitlines():
                     if not line.strip('\0 '):
@@ -81,10 +83,10 @@ def extract_d500x_metadata(fname):
 
 def d500x2guano(fname):
     """Convert a file with raw D500X metadata to use GUANO metadata instead"""
-    print '\n', fname
+    print('\n', fname)
     md = extract_d500x_metadata(fname)
     if not md:
-        print >> sys.stderr, 'Skipping non-D500X file: ' + fname
+        print('Skipping non-D500X file: ' + fname, file=sys.stderr)
         return False
     pprint(md)
 
@@ -94,6 +96,7 @@ def d500x2guano(fname):
     gfile['Make'] = 'Pettersson'
     gfile['Model'] = 'D500X'
     gfile['Timestamp'] = md.pop('File Time')
+    gfile['Original Filename'] = md.pop('File Name')
     gfile['Samplerate'] = md.pop('Samplerate')
     gfile['Length'] = md.pop('Length')
 
@@ -107,7 +110,7 @@ def d500x2guano(fname):
     for k, v in md.items():
         gfile['PET', k] = v
 
-    print gfile.to_string()
+    print(gfile.to_string())
 
     gfile.wav_data = gfile.wav_data[D500X_DATA_SKIP_BYTES:]  # throw out the metadata bytes from 'data' chunk
 
@@ -119,7 +122,7 @@ if __name__ == '__main__':
     from glob import glob
 
     if len(sys.argv) < 2:
-        print >> sys.stderr, 'usage: %s FILE...' % os.path.basename(sys.argv[0])
+        print('usage: %s FILE...' % os.path.basename(sys.argv[0]), file=sys.stderr)
         sys.exit(2)
 
     if os.name == 'nt' and '*' in sys.argv[1]:

@@ -1,4 +1,4 @@
-PYTHON=python2
+PYTHON=python
 
 
 clean:

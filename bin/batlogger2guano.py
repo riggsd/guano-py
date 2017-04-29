@@ -7,6 +7,8 @@ usage::
     $> batlogger2guano.py WAVFILE...
 """
 
+from __future__ import print_function
+
 import sys, os, os.path
 from datetime import datetime
 from xml.etree import ElementTree
@@ -53,8 +55,9 @@ def batlogger2guano(fname):
         g['Elekon|GPS|%s' % node.tag] = node.text
 
     # for k, v in g.items():
-    #     print '%s:\t%s' % (k, v)
+    #     print('%s:\t%s' % (k, v))
 
+    print(g.to_string())
     g.write()
     os.remove(xmlfname)
 
@@ -65,7 +68,7 @@ if __name__ == '__main__':
     from glob import glob
 
     if len(sys.argv) < 2:
-        print >> sys.stderr, 'usage: %s FILE...' % os.path.basename(sys.argv[0])
+        print('usage: %s FILE...' % os.path.basename(sys.argv[0]), file=sys.stderr)
         sys.exit(2)
 
     if os.name == 'nt' and '*' in sys.argv[1]:
@@ -74,6 +77,6 @@ if __name__ == '__main__':
         fnames = sys.argv[1:]
 
     for fname in fnames:
-        print fname, '...'
+        print(fname, '...')
         batlogger2guano(fname)
-        print
+        print()

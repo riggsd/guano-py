@@ -15,7 +15,7 @@ Documentation for guano-py can be found at: http://guano-py.readthedocs.io
 Requirements
 ============
 
-- Python 2.7
+- Python 2.7 or Python 3.3+
 
 
 Installation
