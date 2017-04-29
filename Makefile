@@ -23,7 +23,7 @@ test:
 	$(PYTHON) -m unittest discover -s tests
 
 dist:
-	$(PYTHON) setup.py sdist bdist_wheel
+	$(PYTHON) setup.py sdist bdist_wheel --universal
 
 upload: dist
 	$(PYTHON) twine upload dist/*.*
