@@ -1,0 +1,9 @@
+#
+# Requirements for developing `guano-py` itself, not necessary for *using* guano-py!
+#
+# Install with:
+# $> pip install -r requirements_dev.txt
+#
+
+twine
+sphinx
