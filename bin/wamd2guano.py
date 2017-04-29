@@ -197,7 +197,7 @@ def main():
         print(fname)
         try:
             wamd2guano(fname)
-        except Exception, e:
+        except Exception as e:
             print(e, file=sys.stderr)
         print()
 

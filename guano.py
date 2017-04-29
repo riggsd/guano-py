@@ -269,7 +269,7 @@ class GuanoFile(object):
             cls._serialization_rules[full_key] = serialize_function
 
     def __getitem__(self, item):
-        if type(item) == tuple:
+        if isinstance(item, tuple):
             namespace, key = item[0], item[1]
         elif '|' in item:
             namespace, key = item.split('|', 1)
@@ -284,7 +284,7 @@ class GuanoFile(object):
             return default
 
     def __setitem__(self, key, value):
-        if type(key) == tuple:
+        if isinstance(key, tuple):
             namespace, key = key[0], key[1]
         elif '|' in key:
             namespace, key = key.split('|', 1)
@@ -295,7 +295,7 @@ class GuanoFile(object):
         self._md[namespace][key] = value
 
     def __contains__(self, item):
-        if type(item) == tuple:
+        if isinstance(item, tuple):
             namespace, key = item[0], item[1]
         elif '|' in item:
             namespace, key = item.split('|', 1)
