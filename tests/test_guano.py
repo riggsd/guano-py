@@ -3,7 +3,7 @@
 
 import unittest
 
-from guano import GuanoFile, wavparams
+from guano import GuanoFile, wavparams, parse_timestamp
 
 
 class UnicodeTest(unittest.TestCase):
@@ -66,6 +66,27 @@ class GeneralTest(unittest.TestCase):
     def test_multiline(self):
         """Ensure multiline string `Note` is parsed as `\n` containing string"""
         self.assertEqual(3, len(self.md['Note'].splitlines()))
+
+    def test_parse_timestamps(self):
+        """Verify that we can at least parse all timestamp formats"""
+        fmts = [
+            '2016-12-10T01:02:03',
+            '2016-12-10T01:02:03.123',
+            '2016-12-10T01:02:03.123456',
+
+            '2016-12-10T01:02:03Z',
+            '2016-12-10T01:02:03.123Z',
+            '2016-12-10T01:02:03.123456Z',
+
+            '2016-12-10T01:02:03-07:00',
+            '2016-12-10T01:02:03.123-07:00',
+            '2016-12-10T01:02:03.123456-07:00',
+
+            '2016-12-10 01:02:03',  # bonus
+        ]
+
+        for fmt in fmts:
+            parse_timestamp(fmt)
 
 
 class BadDataTest(unittest.TestCase):
