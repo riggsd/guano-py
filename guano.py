@@ -31,7 +31,7 @@ if sys.version_info[0] > 2:
     basestring = str
 
 
-__version__ = '0.0.7dev'
+__version__ = '0.0.7'
 
 __all__ = 'GuanoFile',
 

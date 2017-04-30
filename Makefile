@@ -1,6 +1,6 @@
 PYTHON=python
 
-.PHONY: help clean test dist upload
+.PHONY: help clean test docs dist upload
 
 help:
 	@echo
@@ -9,6 +9,7 @@ help:
 	@echo help ..... Print this helpful documentation
 	@echo clean .... Clean up build artifacts
 	@echo test ..... Run all project unit tests
+	@echo docs ..... Build documentation
 	@echo dist ..... Build distributable package
 	@echo upload ... Build and upload distributable package to PyPI
 	@echo
@@ -21,6 +22,9 @@ clean:
 
 test:
 	$(PYTHON) -m unittest discover -s tests
+
+docs:
+	cd docs && make html
 
 dist:
 	$(PYTHON) setup.py sdist bdist_wheel --universal
