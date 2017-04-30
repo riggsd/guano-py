@@ -30,4 +30,4 @@ dist:
 	$(PYTHON) setup.py sdist bdist_wheel --universal
 
 upload: dist
-	$(PYTHON) twine upload dist/*.*
+	twine upload dist/*.*
