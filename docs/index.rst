@@ -26,6 +26,7 @@ Table of Contents
    examples
    utils
    license
+   changelog
 
 
 Indices and tables
