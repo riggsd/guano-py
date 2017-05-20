@@ -2,6 +2,14 @@ Changelog
 =========
 
 
+0.0.8
+-----
+
+*2017-05-19*
+
+- Try to recover metadata which is incorrectly encoded (UTF-8 is required, we try to fall back to latin-1)
+
+
 0.0.7
 -----
 

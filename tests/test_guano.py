@@ -92,6 +92,7 @@ class GeneralTest(unittest.TestCase):
 class BadDataTest(unittest.TestCase):
     """
     These are hacks that may go against the specification, done in the name of permissive reading.
+    John Postel: "Be conservative in what you do, be liberal in what you accept from others."
     """
 
     def test_sb41_bad_te(self):
@@ -113,6 +114,12 @@ class BadDataTest(unittest.TestCase):
         md = '''GUANO|Version: 1.0
         Timestamp:
         '''
+        GuanoFile.from_string(md)
+
+    def test_sb42_bad_encoding(self):
+        """SonoBat 4.2 doesn't actually encode as UTF-8. At least try not to blow up when reading."""
+        # SonoBat *probably* uses mac-roman on OS X and windows-1252 on Windows... in the US at least.
+        md = b'GUANO|Version:  1.0\nNote:  Mobile transect with mic 4\xd5 above roof.\n\x00\x00'
         GuanoFile.from_string(md)
 
 

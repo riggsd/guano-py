@@ -31,7 +31,7 @@ if sys.version_info[0] > 2:
     basestring = str
 
 
-__version__ = '0.0.7'
+__version__ = '0.0.8'
 
 __all__ = 'GuanoFile',
 
@@ -224,7 +224,11 @@ class GuanoFile(object):
     def _parse(self, metadata_str):
         """Parse metadata and populate our internal mappings"""
         if not isinstance(metadata_str, unicode):
-            metadata_str = metadata_str.decode('utf-8')
+            try:
+               metadata_str = metadata_str.decode('utf-8')
+            except UnicodeDecodeError as e:
+                metadata_str = metadata_str.decode('latin-1')
+
         for line in metadata_str.split('\n'):
             line = line.strip(WHITESPACE)
             if not line:
