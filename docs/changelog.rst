@@ -2,6 +2,14 @@ Changelog
 =========
 
 
+0.0.9
+-----
+
+*2017-07-07*
+
+- Treat the `GUANO|Version` value as a string rather than numeric value
+
+
 0.0.8
 -----
 

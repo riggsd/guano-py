@@ -122,6 +122,11 @@ class BadDataTest(unittest.TestCase):
         md = b'GUANO|Version:  1.0\nNote:  Mobile transect with mic 4\xd5 above roof.\n\x00\x00'
         GuanoFile.from_string(md)
 
+    def test_sb42_bad_guano_version(self):
+        """Some version of SonoBat 4.2 writes a GUANO|Version of "1.0:" by accident."""
+        md = b'GUANO|Version:  1.0:\n1.0:\n'
+        GuanoFile.from_string(md)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -31,7 +31,7 @@ if sys.version_info[0] > 2:
     basestring = str
 
 
-__version__ = '0.0.8'
+__version__ = '0.0.9'
 
 __all__ = 'GuanoFile',
 
@@ -128,7 +128,7 @@ class GuanoFile(object):
 
         gfile = GuanoFile('myfile.wav')
         print gfile['GUANO|Version']
-        >>> 1.0
+        >>> '1.0'
         gfile['Species Manual ID'] = 'Mylu'
         gfile['Note'] = 'I love GUANO!'
         gfile.write()
@@ -140,7 +140,7 @@ class GuanoFile(object):
     """
 
     _coersion_rules = {
-        'GUANO|Version': float, 'Filter HP': float, 'Length': float, 'Loc Elevation': float,
+        'Filter HP': float, 'Length': float, 'Loc Elevation': float,
         'Loc Accuracy': int, 'Samplerate': int,
         'TE': lambda value: int(value) if value else 1,
         'Loc Position': lambda value: tuple(float(v) for v in value.split()),
