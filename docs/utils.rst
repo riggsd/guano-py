@@ -13,6 +13,12 @@ guano_dump.py
 .. automodule:: guano_dump
 
 
+guano_edit.py
+-------------
+
+.. automodule:: guano_edit
+
+
 d500x2guano.py
 --------------
 
