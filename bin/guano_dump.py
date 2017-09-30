@@ -25,6 +25,8 @@ def dump(fname):
 
 if __name__ == '__main__':
     from glob import glob
+    import logging
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s\t%(levelname)s\t%(message)s')
 
     if len(sys.argv) < 2:
         print('usage: %s FILE...' % os.path.basename(sys.argv[0]), file=sys.stderr)

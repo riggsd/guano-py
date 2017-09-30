@@ -8,9 +8,10 @@ Import this Python module as::
 
     import guano
 
-"""
+This module utilizes the Python :mod:`logging` framework for issuing warnings and debug messages.
+Application code may wish to enable logging with the :func:`logging.basicConfig` function.
 
-from __future__ import print_function
+"""
 
 import os
 import sys
@@ -25,6 +26,9 @@ from tempfile import NamedTemporaryFile
 from collections import OrderedDict, namedtuple
 from base64 import standard_b64encode as base64encode
 from base64 import standard_b64decode as base64decode
+
+import logging
+log = logging.Logger(__name__)
 
 if sys.version_info[0] > 2:
     unicode = str
@@ -177,7 +181,6 @@ class GuanoFile(object):
                              encountering bad metadata values, or whether it should be as lenient
                              as possible (default: True); if in lenient mode, bad values will
                              remain in their UTF-8 string form as found persisted in the file
-        :rtype:  GuanoFile
         :raises ValueError:  if the specified file doesn't represent a valid .WAV or if its
                              existing GUANO metadata is broken
         """
@@ -201,7 +204,7 @@ class GuanoFile(object):
                 if self.strict_mode:
                     raise
                 else:
-                    print('Failed coercing "%s": %s' % (key, e))
+                    log.warning('Failed coercing "%s": %s', key, e)
         return value  # default should already be a Unicode string
 
     def _serialize(self, key, value):
@@ -213,7 +216,7 @@ class GuanoFile(object):
             if self.strict_mode:
                 raise
             else:
-                print('Failed serializing "%s": %s' % (key, e))
+                log.warning('Failed serializing "%s": %s', key, e)
 
     def _load(self):
         """Load the contents of our underlying .WAV file"""
@@ -399,6 +402,8 @@ class GuanoFile(object):
         """
         Write the GUANO .WAV file to disk.
 
+        :param bool make_backup:  create a backup file copy before writing changes or not (default: True);
+                                  backups will be saved to a folder named `GUANO_BACKUP`
         :raises ValueError:  if this `GuanoFile` doesn't represent a valid .WAV by having
             appropriate values for `self.wav_params` (see :meth:`wave.Wave_write.setparams()`)
             and `self.wav_data` (see :meth:`wave.Wave_write.writeframes()`)
@@ -443,9 +448,19 @@ class GuanoFile(object):
             backup_dir = os.path.join(os.path.dirname(self.filename), 'GUANO_BACKUP')
             backup_file = os.path.join(backup_dir, os.path.basename(self.filename))
             if not os.path.isdir(backup_dir):
-                print('Creating backup dir: ' + backup_dir, file=sys.stderr)
+                log.debug('Creating backup dir: %s', backup_dir)
                 os.mkdir(backup_dir)
             if os.path.exists(backup_file):
                 os.remove(backup_file)
             os.rename(self.filename, backup_file)
         os.rename(tempfile.name, self.filename)
+
+
+# This ugly hack prevents a warning if application-level code doesn't configure logging
+if sys.version_info[0] > 2:
+    NullHandler = logging.NullHandler
+else:
+    class NullHandler(logging.Handler):
+        def emit(self, record):
+            pass
+log.addHandler(NullHandler())
