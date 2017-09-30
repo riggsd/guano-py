@@ -128,5 +128,25 @@ class BadDataTest(unittest.TestCase):
         GuanoFile.from_string(md)
 
 
+class StrictParsingTest(unittest.TestCase):
+    """
+    Test our strict/lenient parsing modes.
+    Note that we are always lenient for some types of "bad data", as in :class:BadDataTest above.
+    """
+
+    def test_strict_mode(self):
+        md = '''GUANO|Version: 1.0
+        TE: no
+        Loc Position: 10N 567288E 4584472N
+        '''
+        try:
+            GuanoFile.from_string(md, strict=True)
+        except ValueError as e:
+            pass
+        g = GuanoFile.from_string(md, strict=False)
+        self.assertEqual(g.get('TE', None), 'no')
+        self.assertEqual(g.get('Loc Position', None), '10N 567288E 4584472N')
+
+
 if __name__ == '__main__':
     unittest.main()

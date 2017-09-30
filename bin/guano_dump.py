@@ -19,7 +19,7 @@ from guano import GuanoFile
 def dump(fname):
     print()
     print(fname)
-    gfile = GuanoFile(fname)
+    gfile = GuanoFile(fname, strict=False)
     print(gfile.to_string())
 
 
