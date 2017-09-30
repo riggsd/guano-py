@@ -5,7 +5,7 @@ Changelog
 0.0.10
 ------
 
-*2017-XX-XX*
+*2017-09-30*
 
 - Add `guano_edit.py` util for adding and changing files' GUANO metadata
 - Add strict/lenient parsing option to `GuanoFile` constructor
