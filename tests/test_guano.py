@@ -89,6 +89,55 @@ class GeneralTest(unittest.TestCase):
         for fmt in fmts:
             parse_timestamp(fmt)
 
+    def test_new_empty(self):
+        """Verify that "new" GUANO file metadata is "falsey" but populated metadata is "truthy"."""
+        g = GuanoFile('nonexistent_file.wav')
+        self.assertFalse(g)
+        self.assertFalse('GUANO|Version' in g)
+
+        g['Foo'] = 'bar'
+        self.assertTrue(g)
+        self.assertTrue('GUANO|Version' in g)
+
+    def test_delete_simple(self):
+        """Verify that we can delete fields"""
+        g = GuanoFile()
+        g['Foo'] = 'xyz'
+        self.assertTrue('Foo' in g)
+
+        del g['Foo']
+        self.assertFalse('Foo' in g)
+
+        try:
+            del g['Foo']
+            self.fail('Deleting a deleted key should throw KeyError')
+        except KeyError:
+            pass
+
+    def test_delete_namespaced(self):
+        """Verify that we can delete namespaced fields"""
+        g = GuanoFile()
+        g['Foo|Bar'] = 'xyz'
+        self.assertTrue('Foo|Bar' in g)
+        self.assertTrue('Foo' in g.get_namespaces())
+
+        del g['Foo|Bar']
+        self.assertFalse('Foo|Bar' in g)
+        self.assertFalse('Foo' in g.get_namespaces())
+
+        try:
+            del g['Foo|Bar']
+            self.fail('Deleting a deleted key should throw KeyError')
+        except KeyError:
+            pass
+
+        g['Foo|Bar1'] = 'xyz'
+        g['Foo|Bar2'] = 'abc'
+        del g['Foo|Bar1']
+        self.assertFalse('Foo|Bar1' in g)
+        self.assertTrue('Foo|Bar2' in g)
+        self.assertTrue('Foo' in g.get_namespaces())
+
 
 class BadDataTest(unittest.TestCase):
     """

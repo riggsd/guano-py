@@ -200,8 +200,6 @@ class GuanoFile(object):
 
         if filename is not None and os.path.isfile(filename):
             self._load()
-        else:
-            self._initialize_new_metadata()
 
     def _coerce(self, key, value):
         """Coerce a value from its Unicode representation to a specific data type"""
@@ -269,15 +267,9 @@ class GuanoFile(object):
 
             if not self._wav_data_offset:
                 raise ValueError('No DATA sub-chunk found in .WAV file')
-            if not metadata_buf:
-                # no 'guan' chunk, so treat this as brand new metadata
-                self._initialize_new_metadata()
-                return
 
-            self._parse(metadata_buf)
-
-    def _initialize_new_metadata(self):
-        self['GUANO|Version'] = '1.0'
+            if metadata_buf:
+                self._parse(metadata_buf)
 
     def _parse(self, metadata_str):
         """Parse metadata and populate our internal mappings"""
@@ -347,6 +339,10 @@ class GuanoFile(object):
             return default
 
     def __setitem__(self, key, value):
+        if not self._md:
+            self._md['GUANO'] = {}
+            self._md['GUANO']['Version'] = '1.0'
+
         if isinstance(key, tuple):
             namespace, key = key[0], key[1]
         elif '|' in key:
@@ -365,6 +361,24 @@ class GuanoFile(object):
         else:
             namespace, key = '', item
         return namespace in self._md and key in self._md[namespace]
+
+    def __delitem__(self, key):
+        if isinstance(key, tuple):
+            namespace, key = key[0], key[1]
+        elif '|' in key:
+            namespace, key = key.split('|', 1)
+        else:
+            namespace, key = '', key
+        del self._md[namespace][key]
+        if not self._md[namespace]:
+            del self._md[namespace]
+
+    def __bool__(self):
+        return bool(self._md)
+    __nonzero__ = __bool__  # py2
+
+    def __repr__(self):
+        return '%s(%s)' % (self.__class__.__name__, self.filename)
 
     def get_namespaces(self):
         """

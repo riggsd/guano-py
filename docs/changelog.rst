@@ -8,6 +8,7 @@ Changelog
 
 - Huge improvement in read speed and memory usage by lazily-loading `GuanoFile.wav_data` and by
   *not* using mmap for file access
+- Add support for deleting fields as `del gfile['Species Manual ID']`
 
 
 0.0.10
