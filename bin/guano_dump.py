@@ -38,4 +38,8 @@ if __name__ == '__main__':
         fnames = sys.argv[1:]
 
     for fname in fnames:
-        dump(fname)
+        if os.path.isdir(fname):
+            for subfname in glob(os.path.join(fname, '*.[Ww][Aa][Vv]')):
+                dump(subfname)
+        else:
+            dump(fname)
