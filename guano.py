@@ -15,7 +15,6 @@ Application code may wish to enable logging with the :func:`logging.basicConfig`
 
 import os
 import sys
-import mmap
 import wave
 import struct
 import os.path
@@ -35,7 +34,7 @@ if sys.version_info[0] > 2:
     basestring = str
 
 
-__version__ = '0.0.10'
+__version__ = '0.0.11-dev'
 
 __all__ = 'GuanoFile',
 
@@ -123,6 +122,10 @@ def parse_timestamp(s):
     return timestamp.replace(tzinfo=tz) if tz else timestamp
 
 
+_chunkid = struct.Struct('> 4s')
+_chunksz = struct.Struct('< L')
+
+
 class GuanoFile(object):
     """
     An abstraction of a .WAV file with GUANO metadata.
@@ -149,7 +152,8 @@ class GuanoFile(object):
 
     :ivar str filename:  path to the file which this object represents, or `None` if a "new" file
     :ivar bool strict_mode:  whether the GUANO parser is configured for strict or lenient parsing
-    :ivar bytes wav_data:  the `data` subchunk of a .WAV file consisting of its actual audio data
+    :ivar bytes wav_data:  the `data` subchunk of a .WAV file consisting of its actual audio data,
+                           lazily-loaded and cached for performance
     :ivar wavparams wav_params:  namedtuple of .WAV parameters (nchannels, sampwidth, framerate, nframes, comptype, compname)
     """
 
@@ -186,9 +190,13 @@ class GuanoFile(object):
         """
         self.filename = filename
         self.strict_mode = strict
-        self.wav_data = None
+
         self.wav_params = None
         self._md = OrderedDict()  # metadata storage - map of maps:  namespace->key->val
+
+        self._wav_data = None  # lazily-loaded and cached
+        self._wav_data_offset = 0
+        self._wav_data_size = 0
 
         if filename is not None and os.path.isfile(filename):
             self._load()
@@ -220,48 +228,53 @@ class GuanoFile(object):
 
     def _load(self):
         """Load the contents of our underlying .WAV file"""
-        with open(self.filename, 'rb') as infile:
-            with closing(mmap.mmap(infile.fileno(), 0, access=mmap.ACCESS_READ)) as mmfile:
+        fsize = os.path.getsize(self.filename)
+        if fsize < 8:
+            raise ValueError('File too small to contain valid RIFF "WAVE" header (size %d bytes)' % fsize)
 
-                # sanity check validation
-                if len(mmfile) < 8:
-                    raise ValueError('File too small to contain valid RIFF "WAVE" header (size %d bytes)' % len(mmfile))
-                chunk = struct.unpack_from('> 4s', mmfile, 0x08)[0]
-                if chunk != b'WAVE':
-                    raise ValueError('Expected RIFF chunk "WAVE" at 0x08, but found "%s"' % repr(chunk))
+        with open(self.filename, 'rb') as f:
 
+            f.seek(0x08)
+            chunk = _chunkid.unpack(f.read(4))[0]
+            if chunk != b'WAVE':
+                raise ValueError('Expected RIFF chunk "WAVE" at 0x08, but found "%s"' % repr(chunk))
+
+            try:
+                f.seek(0)
+                self.wav_params = wavparams(*wave.open(f).getparams())
+            except RuntimeError as e:
+                return ValueError(e)  # Python's chunk.py throws this inappropriate exception
+
+            # iterate through the file until we find our 'guan' subchunk
+            metadata_buf = None
+            f.seek(0x0c)
+            while f.tell() < fsize - 1:
                 try:
-                    self.wav_params = wavparams(*wave.open(infile).getparams())
-                except RuntimeError as e:
-                    return ValueError(e)  # Python's chunk.py throws this inappropriate exception
+                    chunkid = _chunkid.unpack(f.read(4))[0]
+                    size = _chunksz.unpack(f.read(4))[0]
+                except struct.error as e:
+                    raise ValueError(e)
 
-                # iterate through the file until we find our 'guan' subchunk
-                metadata_buf = None
-                offset = 0x0c
-                while offset < len(mmfile)-1:
-                    try:
-                        subchunk = struct.unpack_from('> 4s', mmfile, offset)[0]
-                        offset += 4
-                        size = struct.unpack_from('< I', mmfile, offset)[0]
-                        offset += 4
-                    except struct.error as e:
-                        raise ValueError(e)  # FIXME: raw D1000X files fail with "unpack_from requires a buffer of at least 4 bytes"
-                    if subchunk == b'guan':
-                        metadata_buf = mmfile[offset:offset+size]
-                    elif subchunk == b'data':
-                        self.wav_data = mmfile[offset:offset+size]
-                    if size % 2:
-                        offset += 1  # align to 16-bit boundary
-                    offset += size
+                if chunkid == b'guan':
+                    metadata_buf = f.read(size)
+                elif chunkid == b'data':
+                    self._wav_data_offset = f.tell()
+                    self._wav_data_size = size
+                    f.seek(size, 1)
+                else:
+                    f.seek(size, 1)
 
-                if not self.wav_data:
-                    raise ValueError('No DATA sub-chunk found in .WAV file')
-                if not metadata_buf:
-                    # no 'guan' chunk, so treat this as brand new metadata
-                    self._initialize_new_metadata()
-                    return
+                if size % 2:
+                    f.read(1)  # align to 16-bit boundary
 
-                self._parse(metadata_buf)
+            if not self._wav_data_offset:
+                raise ValueError('No DATA sub-chunk found in .WAV file')
+            if not metadata_buf:
+                # no 'guan' chunk, so treat this as brand new metadata
+                self._initialize_new_metadata()
+                return
+
+            self._parse(metadata_buf)
 
     def _initialize_new_metadata(self):
         self['GUANO|Version'] = '1.0'
@@ -272,6 +285,7 @@ class GuanoFile(object):
             try:
                metadata_str = metadata_str.decode('utf-8')
             except UnicodeDecodeError as e:
+                log.warning('GUANO metadata is not UTF-8 encoded! Attempting to coerce. %s', self.filename)
                 metadata_str = metadata_str.decode('latin-1')
 
         for line in metadata_str.split('\n'):
@@ -398,6 +412,17 @@ class GuanoFile(object):
             md_bytes.append(ord(pad))
         return md_bytes
 
+    @property
+    def wav_data(self):
+        """Actual audio data from the wav `data` chunk. Lazily loaded and cached."""
+        if not self._wav_data_size:
+            raise ValueError()
+        if not self._wav_data:
+            with open(self.filename, 'rb') as f:
+                f.seek(self._wav_data_offset)
+                self._wav_data = f.read(self._wav_data_size)
+        return self._wav_data
+
     def write(self, make_backup=True):
         """
         Write the GUANO .WAV file to disk.
@@ -430,14 +455,14 @@ class GuanoFile(object):
             wavfile.writeframes(self.wav_data)
 
         # add the 'guan' sub-chunk after the 'data' sub-chunk
-        tempfile.seek(tempfile.tell())
-        tempfile.write(struct.pack('<4sL', b'guan', len(md_bytes)))
+        tempfile.write(_chunkid.pack(b'guan'))
+        tempfile.write(_chunksz.pack(len(md_bytes)))
         tempfile.write(md_bytes)
 
         # fix the RIFF file length
         total_size = tempfile.tell()
         tempfile.seek(0x04)
-        tempfile.write(struct.pack('<L', total_size - 8))
+        tempfile.write(_chunksz.pack(total_size - 8))
         tempfile.close()
 
         # verify it by re-parsing the new version
