@@ -27,7 +27,8 @@ class UnicodeTest(unittest.TestCase):
         g = GuanoFile.from_string(self.MD)
         g.filename = fname
         g.wav_params = wavparams(1, 2, 500000, 2, 'NONE', None)
-        g.wav_data = b'\0\0'
+        g._wav_data = b'\01\02'  # faking it, don't try this at home!
+        g._wav_data_size = 2
         g.write()
 
         # read it back in
