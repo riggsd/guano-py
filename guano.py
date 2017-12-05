@@ -323,13 +323,17 @@ class GuanoFile(object):
             cls._coersion_rules[full_key] = coerce_function
             cls._serialization_rules[full_key] = serialize_function
 
-    def __getitem__(self, item):
+    def _split_key(self, item):
         if isinstance(item, tuple):
             namespace, key = item[0], item[1]
         elif '|' in item:
             namespace, key = item.split('|', 1)
         else:
             namespace, key = '', item
+        return namespace, key
+
+    def __getitem__(self, item):
+        namespace, key = self._split_key(item)
         return self._md[namespace][key]
 
     def get(self, item, default=None):
@@ -343,32 +347,17 @@ class GuanoFile(object):
             self._md['GUANO'] = {}
             self._md['GUANO']['Version'] = '1.0'
 
-        if isinstance(key, tuple):
-            namespace, key = key[0], key[1]
-        elif '|' in key:
-            namespace, key = key.split('|', 1)
-        else:
-            namespace, key = '', key
+        namespace, key = self._split_key(key)
         if namespace not in self._md:
             self._md[namespace] = {}
         self._md[namespace][key] = value
 
     def __contains__(self, item):
-        if isinstance(item, tuple):
-            namespace, key = item[0], item[1]
-        elif '|' in item:
-            namespace, key = item.split('|', 1)
-        else:
-            namespace, key = '', item
+        namespace, key = self._split_key(item)
         return namespace in self._md and key in self._md[namespace]
 
     def __delitem__(self, key):
-        if isinstance(key, tuple):
-            namespace, key = key[0], key[1]
-        elif '|' in key:
-            namespace, key = key.split('|', 1)
-        else:
-            namespace, key = '', key
+        namespace, key = self._split_key(key)
         del self._md[namespace][key]
         if not self._md[namespace]:
             del self._md[namespace]
