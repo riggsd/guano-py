@@ -1,6 +1,14 @@
 Changelog
 =========
 
+1.0.11
+------
+
+*2017-12-14*
+
+- Version bump to reflect that this is production-quality code
+
+
 0.0.11
 ------
 
