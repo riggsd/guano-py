@@ -49,7 +49,6 @@ class GeneralTest(unittest.TestCase):
 
     def setUp(self):
         GuanoFile.register('User', 'Answer', int)
-        GuanoFile.register('', 'Note', lambda x: x.replace('\\n', '\n'))
         self.md = GuanoFile.from_string(self.MD)
 
     def test_get_namespaces(self):
