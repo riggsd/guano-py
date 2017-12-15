@@ -9,6 +9,7 @@ Changelog
 - Huge improvement in read speed and memory usage by lazily-loading `GuanoFile.wav_data` and by
   *not* using mmap for file access
 - Add support for deleting fields as `del gfile['Species Manual ID']`
+- `disperse.py`: add `--copy` option to copy rather than move files
 
 
 0.0.10
