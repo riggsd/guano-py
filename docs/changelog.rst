@@ -4,7 +4,7 @@ Changelog
 0.0.11
 ------
 
-*2017-12-XX*
+*2017-12-14*
 
 - Huge improvement in read speed and memory usage by lazily-loading `GuanoFile.wav_data` and by
   *not* using mmap for file access
