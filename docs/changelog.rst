@@ -1,6 +1,14 @@
 Changelog
 =========
 
+1.0.12
+
+*2018-08-08*
+
+- Allow setting `GuanoFile.wav_data`, and fix bug in `d500x2guano.py` script which strips
+  Pettersson metadata out of the `data` chunk
+
+
 1.0.11
 ------
 

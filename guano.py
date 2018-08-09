@@ -34,7 +34,7 @@ if sys.version_info[0] > 2:
     basestring = str
 
 
-__version__ = '1.0.11'
+__version__ = '1.0.12'
 
 __all__ = 'GuanoFile',
 
@@ -425,6 +425,11 @@ class GuanoFile(object):
                 f.seek(self._wav_data_offset)
                 self._wav_data = f.read(self._wav_data_size)
         return self._wav_data
+
+    @wav_data.setter
+    def wav_data(self, data):
+        self._wav_data_size = len(data)
+        self._wav_data = data
 
     def write(self, make_backup=True):
         """

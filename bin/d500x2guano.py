@@ -88,7 +88,7 @@ def d500x2guano(fname):
     if not md:
         print('Skipping non-D500X file: ' + fname, file=sys.stderr)
         return False
-    pprint(md)
+    #pprint(md)
 
     gfile = GuanoFile(fname)
     gfile['GUANO|Version'] = 1.0
@@ -112,7 +112,8 @@ def d500x2guano(fname):
 
     print(gfile.to_string())
 
-    gfile.wav_data = gfile.wav_data[D500X_DATA_SKIP_BYTES:]  # throw out the metadata bytes from 'data' chunk
+    # throw out the Pettersson metadata bytes from 'data' chunk
+    gfile.wav_data = gfile.wav_data[D500X_DATA_SKIP_BYTES:]
 
     unlock(fname)  # D500X "locks" files as unwriteable, we must unlock before we can modify
     gfile.write()
