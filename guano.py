@@ -485,8 +485,8 @@ class GuanoFile(object):
                 os.mkdir(backup_dir)
             if os.path.exists(backup_file):
                 os.remove(backup_file)
-            os.rename(self.filename, backup_file)
-        os.rename(tempfile.name, self.filename)
+            shutil.move(self.filename, backup_file)
+        shutil.move(tempfile.name, self.filename)
 
 
 # This ugly hack prevents a warning if application-level code doesn't configure logging
