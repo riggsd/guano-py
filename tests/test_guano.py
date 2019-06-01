@@ -3,7 +3,7 @@
 
 import unittest
 
-from guano import GuanoFile, wavparams, parse_timestamp
+from guano import GuanoFile, wavparams, parse_timestamp, tzoffset
 
 
 class UnicodeTest(unittest.TestCase):
@@ -86,7 +86,36 @@ class GeneralTest(unittest.TestCase):
         ]
 
         for fmt in fmts:
-            parse_timestamp(fmt)
+            try:
+                ts = parse_timestamp(fmt)
+                ts.isoformat()
+            except Exception as e:
+                self.fail('Failed parsing: %s  %s' % (fmt, e))
+
+    def test_tzoffset(self):
+        """Verify our UTC offset timezone support"""
+        fmts = [
+            7,
+            -7,
+            7.0,
+            -7.0,
+
+            '07:00',
+            '+07:00',
+            '-07:00',
+
+            '07',
+            '+07',
+            '-07',
+
+            '0700',
+            '+0700',
+            '-0700',
+        ]
+        for fmt in fmts:
+            tz = tzoffset(fmt)
+            if abs(tz.utcoffset(None).total_seconds()/60/60) > 8:
+                self.fail('Failed parsing UTC offset: %s  %s' % (fmt, tz))
 
     def test_new_empty(self):
         """Verify that "new" GUANO file metadata is "falsey" but populated metadata is "truthy"."""

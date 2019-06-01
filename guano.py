@@ -69,11 +69,16 @@ class tzoffset(tzinfo):
     `offset` should be numeric hours or ISO format string like '-07:00'.
     """
 
-    def __init__(self, offset=None):
+    def __init__(self, offset):
         if isinstance(offset, basestring):
-            # offset as ISO string '-07:00' or '-07' format
-            vals = offset.split(':')
-            offset = int(vals[0]) if len(vals) == 1 else int(vals[0]) + int(vals[1])/60.0
+            # offset as ISO string '-07:00', '-0700', or '-07' format
+            if len(offset) < 4:
+                vals = offset, '00'              # eg '-07'
+            elif ':' in offset:
+                vals = offset.split(':')         # '-07:00'
+            else:
+                vals = offset[:-2], offset[-2:]  # '-0700'
+            offset = int(vals[0]) + int(vals[1])/60.0
         self._offset_hours = offset
         self._offset = timedelta(hours=offset)
 
