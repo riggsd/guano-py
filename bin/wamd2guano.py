@@ -107,7 +107,7 @@ def _parse_wamd_gps(gpsfirst):
         if vals[1] == 'S':
             lat *= -1
         if vals[3] == 'W':
-            lon += -1
+            lon *= -1
         alt = int(round(float(vals[4]))) if len(vals) > 4 else None
     else:
         # EMTouch format
