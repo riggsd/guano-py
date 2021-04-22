@@ -1,3 +1,5 @@
+import io
+import sys
 from setuptools import setup
 from glob import glob
 
@@ -8,7 +10,7 @@ setup(
     name='guano',
     version=__version__,
     description='GUANO, the "Grand Unified" bat acoustics metadata format',
-    long_description=open('README.rst').read(),
+    long_description=io.open('README.rst', encoding='utf-8').read(),
     url='https://github.com/riggsd/guano-py',
     license='MIT',
     author='David A. Riggs',
