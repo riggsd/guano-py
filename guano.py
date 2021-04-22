@@ -78,7 +78,10 @@ class tzoffset(tzinfo):
                 vals = offset.split(':')         # '-07:00'
             else:
                 vals = offset[:-2], offset[-2:]  # '-0700'
-            offset = int(vals[0]) + int(vals[1])/60.0
+            if vals[0].startswith('-'):
+                offset = int(vals[0]) - int(vals[1])/60.0
+            else:
+                offset = int(vals[0]) + int(vals[1])/60.0
         self._offset_hours = offset
         self._offset = timedelta(hours=offset)
 

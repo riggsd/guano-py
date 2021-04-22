@@ -116,6 +116,12 @@ class GeneralTest(unittest.TestCase):
             tz = tzoffset(fmt)
             if abs(tz.utcoffset(None).total_seconds()/60/60) > 8:
                 self.fail('Failed parsing UTC offset: %s  %s' % (fmt, tz))
+    
+    def test_tzoffset_nst(self):
+        """Verify fractional tzoffset like Newfoundland NST"""
+        offset = tzoffset('-02:30')  # Newfoundland NST
+        offset_hours = offset.utcoffset(None).total_seconds() / 60.0 / 60.0
+        self.assertEqual(offset_hours, -2.5)
 
     def test_new_empty(self):
         """Verify that "new" GUANO file metadata is "falsey" but populated metadata is "truthy"."""

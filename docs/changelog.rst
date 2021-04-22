@@ -6,6 +6,7 @@ Changelog
 *2021-XX-XX*
 
 - Leniently parse timestamps with invalid tzoffset of the form `0100` (missing colon)
+- Fix bug with fractional tzoffsets (eg. Newfoundland NST `-02:30`)
 
 
 1.0.12
