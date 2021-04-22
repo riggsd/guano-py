@@ -3,3 +3,5 @@
 *.pyc
 dist
 GUANO_BACKUP
+.venv*
+docs
