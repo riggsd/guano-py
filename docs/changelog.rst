@@ -1,9 +1,9 @@
 Changelog
 =========
 
-1.0.XX
+1.0.13
 
-*2021-XX-XX*
+*2021-04-22*
 
 - Leniently parse timestamps with invalid tzoffset of the form `0100` (missing colon)
 - Fix bug with fractional tzoffsets (eg. Newfoundland NST `-02:30`)
