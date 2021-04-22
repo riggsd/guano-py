@@ -1,6 +1,13 @@
 Changelog
 =========
 
+1.0.XX
+
+*2021-XX-XX*
+
+- Leniently parse timestamps with invalid tzoffset of the form `0100` (missing colon)
+
+
 1.0.12
 
 *2018-08-08*
