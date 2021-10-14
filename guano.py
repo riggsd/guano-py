@@ -327,7 +327,7 @@ class GuanoFile(object):
         if isinstance(keys, basestring):
             keys = [keys]
         for k in keys:
-            full_key = namespace+'|'+k
+            full_key = namespace+'|'+k if namespace else k
             cls._coersion_rules[full_key] = coerce_function
             cls._serialization_rules[full_key] = serialize_function
 
