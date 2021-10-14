@@ -211,6 +211,11 @@ class BadDataTest(unittest.TestCase):
         md = b'GUANO|Version:  1.0:\n1.0:\n'
         GuanoFile.from_string(md)
 
+    def test_empty_values(self):
+        """EMTouchPro (and probably others) writes field keys with empty values"""
+        md = md = b'GUANO|Version:  1.0\nLoc Elevation:\n'
+        GuanoFile.from_string(md)
+
 
 class StrictParsingTest(unittest.TestCase):
     """
@@ -225,6 +230,7 @@ class StrictParsingTest(unittest.TestCase):
         '''
         try:
             GuanoFile.from_string(md, strict=True)
+            self.fail('Expected to fail with strict=True')
         except ValueError as e:
             pass
         g = GuanoFile.from_string(md, strict=False)

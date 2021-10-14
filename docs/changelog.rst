@@ -1,6 +1,13 @@
 Changelog
 =========
 
+1.0.14
+
+*2021-10-XX*
+
+- Ignore metadata fields which have no associated value
+
+
 1.0.13
 
 *2021-04-22*

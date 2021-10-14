@@ -295,7 +295,7 @@ class GuanoFile(object):
             full_key, val = line.split(':', 1)
             namespace, key = full_key.split('|', 1) if '|' in full_key else ('', full_key)
             namespace, key, full_key, val = namespace.strip(), key.strip(), full_key.strip(), val.strip()
-            if not key:
+            if not key or not val:
                 continue
             if namespace not in self._md:
                 self._md[namespace] = OrderedDict()
@@ -308,6 +308,10 @@ class GuanoFile(object):
         Create a :class:`GuanoFile` instance from a GUANO metadata string
 
         :param metadata_str:  a string (or string-like buffer) of GUANO metadata
+        :param bool strict:  whether the parser should be strict and raise exceptions when
+                             encountering bad metadata values, or whether it should be as lenient
+                             as possible (default: True); if in lenient mode, bad values will
+                             remain in their UTF-8 string form as found persisted in the file
         :rtype:  GuanoFile
         """
         return GuanoFile(*args, **kwargs)._parse(metadata_str)
