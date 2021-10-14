@@ -3,7 +3,7 @@ Changelog
 
 1.0.14
 
-*2021-10-XX*
+*2021-10-13*
 
 - Ignore metadata fields which have no associated value
 
