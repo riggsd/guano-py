@@ -53,7 +53,7 @@ def locate_files(rootdir):
                     try:
                         yield guano.GuanoFile(os.path.join(root, filename))
                     except ValueError as e:
-                        pass
+                        pass  # no guano metadata
     elif os.path.isfile(rootdir):
         filename = rootdir
         try:
@@ -69,8 +69,10 @@ def update(gfile, md, dry_run=False):
     print()
     print(gfile.filename)
 
-    for k, v in md.items():
-        gfile[k] = GuanoTemplate(v).substitute(gfile)
+    for key, value in md.items():
+        value = GuanoTemplate(value).substitute(gfile)
+        value = gfile._coerce(key, value)
+        gfile[key] = value
 
     print(gfile.to_string())
     if not dry_run:
