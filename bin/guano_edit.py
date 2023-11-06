@@ -9,6 +9,9 @@ used by specifying the field as `${Fieldname}`.
 Be careful to properly escape values for your shell commandline, especially
 if using value templates! Study the examples below.
 
+Add the `--dry-run` argument and no changes will be saved, but you'll be
+able to review the proposed metadata changes on stdout.
+
 
 Examples::
 
@@ -33,7 +36,6 @@ from string import Template
 import guano
 
 
-DRY_RUN = False
 MAKE_BACKUPS = True
 
 
@@ -83,9 +85,12 @@ def main():
     """Commandline processing script"""
     md = {}      # new metadata values
     inputs = []  # files and folders we're operating on
+    dry_run = False
 
     for arg in sys.argv[1:]:
-        if ':' in arg:
+        if arg == '--dry-run':
+            dry_run = True
+        elif ':' in arg:
             k, v = (x.strip() for x in arg.split(':', 1))
             md[k] = v
         else:
@@ -95,7 +100,7 @@ def main():
 
     for input in inputs:
         for gfile in locate_files(input):
-            update(gfile, md, dry_run=DRY_RUN)
+            update(gfile, md, dry_run=dry_run)
 
 
 if __name__ == '__main__':
