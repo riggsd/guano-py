@@ -5,6 +5,8 @@ Changelog
 
 *2023-XX-XX*
 
+- Changed the default parsing behavior to `strict=False`, for lenient parsing. Users may
+  explicitly use `strict=True` if using this library for validation of GUANO metadata.
 - Fix bug parsing `Loc Accuracy` field, which should be `float` rather than `int`
 - Fix bug in `guano_edit.py` which failed to coerce some values
 - Add `--dry-run` option to `guano_edit.py`

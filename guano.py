@@ -183,7 +183,7 @@ class GuanoFile(object):
         'Timestamp': lambda value: value.isoformat() if value else '',
     }
 
-    def __init__(self, filename=None, strict=True):
+    def __init__(self, filename=None, strict=False):
         """
         Create a GuanoFile instance which represents a single file's GUANO metadata.
         If the file already contains GUANO metadata, it will be parsed immediately. If not, then
@@ -194,8 +194,8 @@ class GuanoFile(object):
         :type filename:  str or None
         :param bool strict:  whether the parser should be strict and raise exceptions when
                              encountering bad metadata values, or whether it should be as lenient
-                             as possible (default: True); if in lenient mode, bad values will
-                             remain in their UTF-8 string form as found persisted in the file
+                             as possible (default: False, lenient); if in lenient mode, bad values
+                             will remain in their UTF-8 string form as found persisted in the file
         :raises ValueError:  if the specified file doesn't represent a valid .WAV or if its
                              existing GUANO metadata is broken
         """
