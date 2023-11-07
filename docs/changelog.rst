@@ -1,6 +1,15 @@
 Changelog
 =========
 
+1.0.15
+
+*2023-XX-XX*
+
+- Fix bug parsing `Loc Accuracy` field, which should be `float` rather than `int`
+- Fix bug in `guano_edit.py` which failed to coerce some values
+- Add `--dry-run` option to `guano_edit.py`
+
+
 1.0.14
 
 *2021-10-13*
