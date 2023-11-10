@@ -1,5 +1,4 @@
 import io
-import sys
 from setuptools import setup
 from glob import glob
 

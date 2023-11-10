@@ -3,7 +3,7 @@ Changelog
 
 1.0.15
 
-*2023-XX-XX*
+*2023-11-10*
 
 - Changed the default parsing behavior to `strict=False`, for lenient parsing. Users may
   explicitly use `strict=True` if using this library for validation of GUANO metadata.
