@@ -36,6 +36,24 @@ class UnicodeTest(unittest.TestCase):
 
         self.assertEqual(self.NOTE, g2['Note'])
 
+    def test_filelike_roundtrip(self):
+        """Same as test_file_roundtrip, but reading a file-like object, not filename."""
+        fname = 'test_guano.wav'
+
+        # write a fake .WAV file
+        g = GuanoFile.from_string(self.MD)
+        g.filename = fname
+        g.wav_params = wavparams(1, 2, 500000, 2, 'NONE', None)
+        g._wav_data = b'\01\02'  # faking it, don't try this at home!
+        g._wav_data_size = 2
+        g.write()
+
+        # read it back in
+        with open(fname, 'rb') as f:
+            g2 = GuanoFile(f)
+
+        self.assertEqual(self.NOTE, g2['Note'])
+
 
 class GeneralTest(unittest.TestCase):
 
