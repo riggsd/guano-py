@@ -20,7 +20,7 @@ import struct
 import os.path
 import shutil
 from datetime import datetime, tzinfo, timedelta
-from contextlib import closing
+from contextlib import closing, nullcontext
 from tempfile import NamedTemporaryFile
 from collections import OrderedDict, namedtuple
 from base64 import standard_b64encode as base64encode
@@ -158,7 +158,7 @@ class GuanoFile(object):
     Anabat-format file or to a sidecar file, for example, by populating a `GuanoFile` object and
     then using the :func:`serialize()` method to produce correctly formatted UTF-8 encoded metadata.
 
-    :ivar str filename:  path to the file which this object represents, or `None` if a "new" file
+    :ivar str filename:  path to the file which this object represents, or `None` if a "new" file or file-like object
     :ivar bool strict_mode:  whether the GUANO parser is configured for strict or lenient parsing
     :ivar bytes wav_data:  the `data` subchunk of a .WAV file consisting of its actual audio data,
                            lazily-loaded and cached for performance
@@ -183,15 +183,15 @@ class GuanoFile(object):
         'Timestamp': lambda value: value.isoformat() if value else '',
     }
 
-    def __init__(self, filename=None, strict=False):
+    def __init__(self, file=None, strict=False):
         """
         Create a GuanoFile instance which represents a single file's GUANO metadata.
         If the file already contains GUANO metadata, it will be parsed immediately. If not, then
         this object will be initialized as "new" metadata.
 
-        :param filename:  path to an existing .WAV file with GUANO metadata; if the path does not
-                          exist or is `None` then this instance represents a "new" file
-        :type filename:  str or None
+        :param file:  an existing .WAV file with GUANO metadata; if the path does not
+                      exist or is `None` then this instance represents a "new" file
+        :type file:  str or file-like object (implements methods seek, read, tell) or None
         :param bool strict:  whether the parser should be strict and raise exceptions when
                              encountering bad metadata values, or whether it should be as lenient
                              as possible (default: False, lenient); if in lenient mode, bad values
@@ -199,7 +199,7 @@ class GuanoFile(object):
         :raises ValueError:  if the specified file doesn't represent a valid .WAV or if its
                              existing GUANO metadata is broken
         """
-        self.filename = filename
+        self.file = file
         self.strict_mode = strict
 
         self.wav_params = None
@@ -209,7 +209,9 @@ class GuanoFile(object):
         self._wav_data_offset = 0
         self._wav_data_size = 0
 
-        if filename is not None and os.path.isfile(filename):
+        if file is not None:
+            if self.filename and not os.path.isfile(self.filename):
+                return
             self._load()
 
     def _coerce(self, key, value):
@@ -237,11 +239,17 @@ class GuanoFile(object):
 
     def _load(self):
         """Load the contents of our underlying .WAV file"""
-        fsize = os.path.getsize(self.filename)
-        if fsize < 8:
-            raise ValueError('File too small to contain valid RIFF "WAVE" header (size %d bytes)' % fsize)
+        if self.filename:
+            opener = open(self.filename, 'rb')
+        else:
+            opener = nullcontext(self.file)
 
-        with open(self.filename, 'rb') as f:
+        with opener as f:
+            # check filesize: seek to end of file and tell its byte offset
+            f.seek(0, 2)
+            fsize = f.tell()
+            if fsize < 8:
+                raise ValueError('File too small to contain valid RIFF "WAVE" header (size %d bytes)' % fsize)
 
             f.seek(0x08)
             chunk = _chunkid.unpack(f.read(4))[0]
@@ -269,9 +277,9 @@ class GuanoFile(object):
                 elif chunkid == b'data':
                     self._wav_data_offset = f.tell()
                     self._wav_data_size = size
-                    f.seek(size, 1)
+                    f.seek(size, 1)  # skip over wav data
                 else:
-                    f.seek(size, 1)
+                    f.seek(size, 1)  # skip over wav data
 
                 if size % 2:
                     f.read(1)  # align to 16-bit boundary
@@ -288,7 +296,7 @@ class GuanoFile(object):
             try:
                metadata_str = metadata_str.decode('utf-8')
             except UnicodeDecodeError as e:
-                log.warning('GUANO metadata is not UTF-8 encoded! Attempting to coerce. %s', self.filename)
+                log.warning('GUANO metadata is not UTF-8 encoded! Attempting to coerce. %s', repr(self))
                 metadata_str = metadata_str.decode('latin-1')
 
         for line in metadata_str.split('\n'):
@@ -382,7 +390,7 @@ class GuanoFile(object):
     __nonzero__ = __bool__  # py2
 
     def __repr__(self):
-        return '%s(%s)' % (self.__class__.__name__, self.filename)
+        return '%s(%s)' % (self.__class__.__name__, self.file)
 
     def get_namespaces(self):
         """
@@ -431,14 +439,33 @@ class GuanoFile(object):
         return md_bytes
 
     @property
+    def filename(self):
+        """Get the filename associated with this GuanoFile, if set.
+
+        Returns None when GuanoFile is a file-like object or is not tied to any underlying file"""
+        if isinstance(self.file, basestring):
+            return self.file
+        return None
+
+    @filename.setter
+    def filename(self, value):
+        """Set the filename for this GuanoFile. Set this before writing to a new file"""
+        if isinstance(value, basestring):
+            self.file = value
+        else:
+            raise ValueError("Filename must be a string")
+
+    @property
     def wav_data(self):
         """Actual audio data from the wav `data` chunk. Lazily loaded and cached."""
         if not self._wav_data_size:
             raise ValueError()
         if not self._wav_data:
-            with open(self.filename, 'rb') as f:
+            opener = open(self.filename, 'rb') if self.filename else nullcontext(self.file)
+            with opener as f:
                 f.seek(self._wav_data_offset)
                 self._wav_data = f.read(self._wav_data_size)
+
         return self._wav_data
 
     @wav_data.setter
