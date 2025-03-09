@@ -3,7 +3,7 @@ Changelog
 
 1.0.16
 
-*2025-XX-XX*
+*2025-03-08*
 
 - guano-py now requires Python 3.6+
 - Support reading from any file-like object (one that implements `seek`, `read`, and

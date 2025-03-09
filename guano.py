@@ -30,7 +30,7 @@ import logging
 log = logging.Logger(__name__)
 
 
-__version__ = '1.0.16.dev0'
+__version__ = '1.0.16'
 
 __all__ = 'GuanoFile',
 
