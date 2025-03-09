@@ -1,6 +1,16 @@
 Changelog
 =========
 
+1.0.16
+
+*2025-XX-XX*
+
+- TODO: nullcontext requires Python 3.7+
+
+- Support reading from any file-like object (one that implements `seek`, `read`, and
+  `tell`) - Thanks to Jeff Gerard of Conservation Metrics
+
+
 1.0.15
 
 *2023-11-10*

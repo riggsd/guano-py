@@ -199,7 +199,7 @@ class GuanoFile(object):
         :raises ValueError:  if the specified file doesn't represent a valid .WAV or if its
                              existing GUANO metadata is broken
         """
-        self.file = file
+        self._file = file
         self.strict_mode = strict
 
         self.wav_params = None
@@ -242,7 +242,7 @@ class GuanoFile(object):
         if self.filename:
             opener = open(self.filename, 'rb')
         else:
-            opener = nullcontext(self.file)
+            opener = nullcontext(self._file)
 
         with opener as f:
             # check filesize: seek to end of file and tell its byte offset
@@ -294,7 +294,7 @@ class GuanoFile(object):
         """Parse metadata and populate our internal mappings"""
         if not isinstance(metadata_str, unicode):
             try:
-               metadata_str = metadata_str.decode('utf-8')
+                metadata_str = metadata_str.decode('utf-8')
             except UnicodeDecodeError as e:
                 log.warning('GUANO metadata is not UTF-8 encoded! Attempting to coerce. %s', repr(self))
                 metadata_str = metadata_str.decode('latin-1')
@@ -390,7 +390,7 @@ class GuanoFile(object):
     __nonzero__ = __bool__  # py2
 
     def __repr__(self):
-        return '%s(%s)' % (self.__class__.__name__, self.file)
+        return '%s(%s)' % (self.__class__.__name__, self._file)
 
     def get_namespaces(self):
         """
@@ -443,15 +443,15 @@ class GuanoFile(object):
         """Get the filename associated with this GuanoFile, if set.
 
         Returns None when GuanoFile is a file-like object or is not tied to any underlying file"""
-        if isinstance(self.file, basestring):
-            return self.file
+        if isinstance(self._file, basestring):
+            return self._file
         return None
 
     @filename.setter
     def filename(self, value):
         """Set the filename for this GuanoFile. Set this before writing to a new file"""
         if isinstance(value, basestring):
-            self.file = value
+            self._file = value
         else:
             raise ValueError("Filename must be a string")
 
@@ -461,7 +461,7 @@ class GuanoFile(object):
         if not self._wav_data_size:
             raise ValueError()
         if not self._wav_data:
-            opener = open(self.filename, 'rb') if self.filename else nullcontext(self.file)
+            opener = open(self.filename, 'rb') if self.filename else nullcontext(self._file)
             with opener as f:
                 f.seek(self._wav_data_offset)
                 self._wav_data = f.read(self._wav_data_size)
