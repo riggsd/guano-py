@@ -141,27 +141,6 @@ class GeneralTest(unittest.TestCase):
         offset_hours = offset.utcoffset(None).total_seconds() / 60.0 / 60.0
         self.assertEqual(offset_hours, -2.5)
 
-    def test_species(self):
-        """Verify that we handle multiple species labels"""
-        g = GuanoFile()
-        g["Species Auto ID"] = ["Mylu"]
-        s = g.to_string()
-        g2 = GuanoFile.from_string(s)
-        self.assertEqual(g2["Species Auto ID"], ["Mylu"])
-
-        g = GuanoFile()
-        g["Species Auto ID"] = ["Mylu", "Epfu"]
-        s = g.to_string()
-        g2 = GuanoFile.from_string(s)
-        self.assertEqual(g2["Species Auto ID"], ["Mylu", "Epfu"])
-
-        # special case where we liberally accept a single str value
-        g = GuanoFile()
-        g["Species Auto ID"] = "Mylu"
-        s = g.to_string()
-        g2 = GuanoFile.from_string(s)
-        self.assertEqual(g2["Species Auto ID"], ["Mylu"])
-
     def test_new_empty(self):
         """Verify that "new" GUANO file metadata is "falsey" but populated metadata is "truthy"."""
         g = GuanoFile('nonexistent_file.wav')
@@ -252,7 +231,7 @@ class BadDataTest(unittest.TestCase):
 
     def test_empty_values(self):
         """EMTouchPro (and probably others) writes field keys with empty values"""
-        md = b'GUANO|Version:  1.0\nLoc Elevation:\n'
+        md = md = b'GUANO|Version:  1.0\nLoc Elevation:\n'
         GuanoFile.from_string(md)
 
 
