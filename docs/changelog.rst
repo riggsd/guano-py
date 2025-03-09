@@ -9,6 +9,8 @@ Changelog
 
 - Support reading from any file-like object (one that implements `seek`, `read`, and
   `tell`) - Thanks to Jeff Gerard of Conservation Metrics
+- Add `--dry-run` option to `wamd2guano.py`
+- Remove usage of `chunk` module (deprecated in Python 3.11) (fixes #29)
 
 
 1.0.15

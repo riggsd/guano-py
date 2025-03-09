@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """
 Convert Wildlife Acoustics WAMD metadata files to use GUANO metadata instead.
 
@@ -12,7 +12,6 @@ from __future__ import print_function
 import os
 import os.path
 import sys
-import chunk
 import struct
 from datetime import datetime
 from pprint import pprint
@@ -116,10 +115,96 @@ def _parse_wamd_gps(gpsfirst):
     return lat, lon, alt
 
 
+class RiffChunk:
+    """A replacement for chunk.Chunk to handle RIFF chunks."""
+
+    def __init__(self, file_or_chunk, bigendian=False):
+        self.bigendian = bigendian
+        self.format = '>I' if bigendian else '<I'
+
+        # Determine if we're reading from a file or another chunk
+        if isinstance(file_or_chunk, RiffChunk):  # It's a parent chunk
+            self.parent = file_or_chunk
+            self.file = self.parent.file
+        else:  # It's a file
+            self.file = file_or_chunk
+            self.parent = None
+
+        # Read chunk header
+        if self.parent:
+            self.name = self.parent.read(4)
+        else:
+            self.name = self.file.read(4)
+
+        if len(self.name) < 4:
+            raise EOFError
+
+        # Read chunk size
+        if self.parent:
+            size_bytes = self.parent.read(4)
+        else:
+            size_bytes = self.file.read(4)
+
+        if len(size_bytes) < 4:
+            raise EOFError
+
+        self.size = struct.unpack(self.format, size_bytes)[0]
+        self.bytes_read = 0
+
+    def getname(self):
+        """Return the name (ID) of this chunk."""
+        return self.name
+
+    def getsize(self):
+        """Return the size of this chunk's data."""
+        return self.size
+
+    def read(self, size=None):
+        """Read at most size bytes from this chunk."""
+        if size is None:
+            size = self.size - self.bytes_read
+        else:
+            size = min(size, self.size - self.bytes_read)
+
+        if size <= 0:
+            return b''
+
+        data = self.file.read(size)
+        self.bytes_read += len(data)
+
+        # If we have a parent, update its bytes_read too
+        if self.parent:
+            self.parent.bytes_read += len(data)
+
+        return data
+
+    def skip(self):
+        """Skip to the end of this chunk."""
+        if self.bytes_read < self.size:
+            remaining = self.size - self.bytes_read
+
+            if self.parent:
+                # For nested chunks, we need to read (and discard) the data
+                # instead of seeking, so parent's position is updated correctly
+                self.read(remaining)
+            else:
+                # Direct file access can use seek
+                self.file.seek(remaining, 1)
+                self.bytes_read = self.size
+
+        # Handle alignment - chunks are word-aligned
+        if self.size % 2:
+            if self.parent:
+                self.parent.read(1)  # Read and discard padding byte
+            else:
+                self.file.seek(1, 1)
+                # No need to update bytes_read for padding
+
+
 def wamd(fname):
     """Extract WAMD metadata from a .WAV file as a dict"""
     with open(fname, 'rb') as f:
-        ch = chunk.Chunk(f, bigendian=False)
+        ch = RiffChunk(f)
         if ch.getname() != b'RIFF':
             raise Exception('%s is not a RIFF file!' % fname)
         if ch.read(4) != b'WAVE':
@@ -128,7 +213,7 @@ def wamd(fname):
         wamd_chunk = None
         while True:
             try:
-                subch = chunk.Chunk(ch, bigendian=False)
+                subch = RiffChunk(ch)
             except EOFError:
                 break
             if subch.getname() == b'wamd':
@@ -155,7 +240,7 @@ def wamd(fname):
         return metadata
 
 
-def wamd2guano(fname):
+def wamd2guano(fname, dry_run=False):
     """Convert a Wildlife Acoustics WAMD metadata file to GUANO metadata format"""
     wamd_md = wamd(fname)
     pprint(wamd_md)
@@ -187,25 +272,34 @@ def wamd2guano(fname):
 
     print(gfile.to_string())
 
-    gfile.write()
+    if not dry_run:
+        gfile.write()
 
 
 def main():
     from glob import glob
 
-    if len(sys.argv) < 2:
-        print('usage: %s FILE...' % os.path.basename(sys.argv[0]), file=sys.stderr)
+    if len(sys.argv) < 2 or '--help' in sys.argv:
+        print('usage: %s [--dry-run] FILE...' % os.path.basename(sys.argv[0]), file=sys.stderr)
         sys.exit(2)
 
-    if os.name == 'nt' and '*' in sys.argv[1]:
-        fnames = glob(sys.argv[1])
+    args = sys.argv[1:]
+
+    if '--dry-run' in args:
+        dry_run = True
+        args.pop(args.index('--dry-run'))
     else:
-        fnames = sys.argv[1:]
+        dry_run = False
+
+    if os.name == 'nt' and '*' in args[0]:
+        fnames = glob(args[0])
+    else:
+        fnames = args
 
     for fname in fnames:
         print(fname)
         try:
-            wamd2guano(fname)
+            wamd2guano(fname, dry_run=dry_run)
         except Exception as e:
             import traceback
             traceback.print_exc()
