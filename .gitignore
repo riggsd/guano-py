@@ -4,5 +4,8 @@
 build
 dist
 GUANO_BACKUP
+docs/_build
 .venv*
-docs
+.env*
+.idea
+.vscode
