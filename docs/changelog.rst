@@ -5,8 +5,7 @@ Changelog
 
 *2025-XX-XX*
 
-- TODO: nullcontext requires Python 3.7+
-
+- guano-py now requires Python 3.6+
 - Support reading from any file-like object (one that implements `seek`, `read`, and
   `tell`) - Thanks to Jeff Gerard of Conservation Metrics
 - Add `--dry-run` option to `wamd2guano.py`

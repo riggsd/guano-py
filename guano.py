@@ -14,7 +14,6 @@ Application code may wish to enable logging with the :func:`logging.basicConfig`
 """
 
 import os
-import sys
 import wave
 import struct
 import os.path
@@ -25,13 +24,10 @@ from tempfile import NamedTemporaryFile
 from collections import OrderedDict, namedtuple
 from base64 import standard_b64encode as base64encode
 from base64 import standard_b64decode as base64decode
+from typing import Any, BinaryIO, Callable, Iterable, Tuple, Union
 
 import logging
 log = logging.Logger(__name__)
-
-if sys.version_info[0] > 2:
-    unicode = str
-    basestring = str
 
 
 __version__ = '1.0.16.dev0'
@@ -70,7 +66,7 @@ class tzoffset(tzinfo):
     """
 
     def __init__(self, offset):
-        if isinstance(offset, basestring):
+        if isinstance(offset, str):
             # offset as ISO string '-07:00', '-0700', or '-07' format
             if len(offset) < 4:
                 vals = offset, '00'              # eg '-07'
@@ -98,7 +94,7 @@ class tzoffset(tzinfo):
         return self.tzname(None)
 
 
-def parse_timestamp(s):
+def parse_timestamp(s) -> datetime:
     """
     Parse a string in supported subset of ISO 8601 / RFC 3331 format to :class:`datetime.datetime`.
     The timestamp will be timezone-aware of a TZ is specified, or timezone-naive if in "local" fmt.
@@ -183,7 +179,7 @@ class GuanoFile(object):
         'Timestamp': lambda value: value.isoformat() if value else '',
     }
 
-    def __init__(self, file=None, strict=False):
+    def __init__(self, file: Union[str, BinaryIO] = None, strict=False):
         """
         Create a GuanoFile instance which represents a single file's GUANO metadata.
         If the file already contains GUANO metadata, it will be parsed immediately. If not, then
@@ -199,12 +195,12 @@ class GuanoFile(object):
         :raises ValueError:  if the specified file doesn't represent a valid .WAV or if its
                              existing GUANO metadata is broken
         """
-        if isinstance(file, basestring):
+        if isinstance(file, str):
             self.filename = file
             self._file = None
         else:
             self.filename = file.name if hasattr(file, 'name') else None
-            self._file = file  # a file-like object
+            self._file: BinaryIO = file  # a file-like object
 
         self.strict_mode = strict
 
@@ -218,7 +214,7 @@ class GuanoFile(object):
         if self._file or (self.filename and os.path.isfile(self.filename)):
             self._load()
 
-    def _coerce(self, key, value):
+    def _coerce(self, key: str, value: str) -> Any:
         """Coerce a value from its Unicode representation to a specific data type"""
         if key in self._coersion_rules:
             try:
@@ -230,9 +226,9 @@ class GuanoFile(object):
                     log.warning('Failed coercing "%s": %s', key, e)
         return value  # default should already be a Unicode string
 
-    def _serialize(self, key, value):
+    def _serialize(self, key: str, value: Any) -> str:
         """Serialize a value from its real representation to GUANO Unicode representation"""
-        serialize = self._serialization_rules.get(key, unicode)
+        serialize = self._serialization_rules.get(key, str)
         try:
             return serialize(value)
         except (ValueError, TypeError) as e:
@@ -292,7 +288,7 @@ class GuanoFile(object):
 
     def _parse(self, metadata_str):
         """Parse metadata and populate our internal mappings"""
-        if not isinstance(metadata_str, unicode):
+        if not isinstance(metadata_str, str):
             try:
                 metadata_str = metadata_str.decode('utf-8')
             except UnicodeDecodeError as e:
@@ -314,7 +310,7 @@ class GuanoFile(object):
         return self
 
     @classmethod
-    def from_string(cls, metadata_str, *args, **kwargs):
+    def from_string(cls, metadata_str, *args, **kwargs) -> 'GuanoFile':
         """
         Create a :class:`GuanoFile` instance from a GUANO metadata string
 
@@ -328,7 +324,7 @@ class GuanoFile(object):
         return GuanoFile(*args, **kwargs)._parse(metadata_str)
 
     @classmethod
-    def register(cls, namespace, keys, coerce_function, serialize_function=str):
+    def register(cls, namespace: str, keys: Union[str, Iterable[str]], coerce_function: Callable, serialize_function: Callable = str):
         """
         Configure the GUANO parser to recognize new namespaced keys.
 
@@ -339,14 +335,14 @@ class GuanoFile(object):
         :param serialize_function:  an optional function for serializing the value to UTF-8 string
         :type serialize_function:  callable
         """
-        if isinstance(keys, basestring):
+        if isinstance(keys, str):
             keys = [keys]
         for k in keys:
             full_key = namespace+'|'+k if namespace else k
             cls._coersion_rules[full_key] = coerce_function
             cls._serialization_rules[full_key] = serialize_function
 
-    def _split_key(self, item):
+    def _split_key(self, item) -> Tuple[str, str]:
         if isinstance(item, tuple):
             namespace, key = item[0], item[1]
         elif '|' in item:
@@ -355,11 +351,11 @@ class GuanoFile(object):
             namespace, key = '', item
         return namespace, key
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> Any:
         namespace, key = self._split_key(item)
         return self._md[namespace][key]
 
-    def get(self, item, default=None):
+    def get(self, item, default=None) -> Any:
         try:
             return self[item]
         except KeyError:
@@ -375,7 +371,7 @@ class GuanoFile(object):
             self._md[namespace] = {}
         self._md[namespace][key] = value
 
-    def __contains__(self, item):
+    def __contains__(self, item) -> bool:
         namespace, key = self._split_key(item)
         return namespace in self._md and key in self._md[namespace]
 
@@ -385,21 +381,20 @@ class GuanoFile(object):
         if not self._md[namespace]:
             del self._md[namespace]
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return bool(self._md)
-    __nonzero__ = __bool__  # py2
 
-    def __repr__(self):
-        return '%s(%s)' % (self.__class__.__name__, self._file)
+    def __repr__(self) -> str:
+        return '%s(%s)' % (self.__class__.__name__, self.filename or self._file)
 
-    def get_namespaces(self):
+    def get_namespaces(self) -> list:
         """
         Get list of all namespaces represented by this metadata.
         This includes the 'GUANO' namespace, and the '' (empty string) namespace for well-known fields.
         """
-        return self._md.keys()
+        return list(self._md.keys())
 
-    def items(self, namespace=None):
+    def items(self, namespace: str = None) -> Iterable[Tuple[str, Any]]:
         """Iterate over (key, value) for entire metadata or for specified namespace of fields"""
         if namespace is not None:
             for k, v in self._md[namespace].items():
@@ -410,17 +405,17 @@ class GuanoFile(object):
                     k = '%s|%s' % (namespace, k) if namespace else k
                     yield k, v
 
-    def items_namespaced(self):
+    def items_namespaced(self) -> Iterable[Tuple[str, str, Any]]:
         """Iterate over (namespace, key, value) for entire metadata"""
         for namespace, data in self._md.items():
             for k, v in data.items():
                 yield namespace, k, v
 
-    def well_known_items(self):
+    def well_known_items(self) -> Iterable[Tuple[str, Any]]:
         """Iterate over (key, value) for all the well-known (defined) fields"""
         return self.items('')
 
-    def to_string(self):
+    def to_string(self) -> str:
         """Represent the GUANO metadata as a Unicode string"""
         lines = []
         for namespace, data in self._md.items():
@@ -430,7 +425,7 @@ class GuanoFile(object):
                 lines.append(u'%s: %s' % (k, v))
         return u'\n'.join(lines)
 
-    def serialize(self, pad='\n'):
+    def serialize(self, pad='\n') -> bytes:
         """Serialize the GUANO metadata as UTF-8 encoded bytes"""
         md_bytes = bytearray(self.to_string(), 'utf-8')
         if pad is not None and len(md_bytes) % 2:
@@ -439,7 +434,7 @@ class GuanoFile(object):
         return md_bytes
 
     @property
-    def wav_data(self):
+    def wav_data(self) -> bytes:
         """Actual audio data from the wav `data` chunk. Lazily loaded and cached."""
         if not self._wav_data_size:
             raise ValueError()
@@ -452,7 +447,7 @@ class GuanoFile(object):
         return self._wav_data
 
     @wav_data.setter
-    def wav_data(self, data):
+    def wav_data(self, data: bytes):
         self._wav_data_size = len(data)
         self._wav_data = data
 
@@ -527,11 +522,5 @@ class nullcontext():
         pass
 
 
-# This ugly hack prevents a warning if application-level code doesn't configure logging
-if sys.version_info[0] > 2:
-    NullHandler = logging.NullHandler
-else:
-    class NullHandler(logging.Handler):
-        def emit(self, record):
-            pass
-log.addHandler(NullHandler())
+# prevents a warning if application-level code doesn't configure logging
+log.addHandler(logging.NullHandler())
