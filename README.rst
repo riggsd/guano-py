@@ -37,7 +37,7 @@ locally in developer mode to hack on it yourself::
     $> cd guano-py
     $> python setup.py develop
 
-|Documentation Status|
+|Master Tests| |Dev Tests| |Documentation Status|
 
 
 API Usage
@@ -91,5 +91,9 @@ API Usage
 .. _GUANO: http://guano-md.org
 .. _useful scripts: bin/
 
+.. |Master Tests| image:: https://github.com/riggsd/guano-py/actions/workflows/python-tests.yml/badge.svg?branch=master
+   :target: https://github.com/riggsd/guano-py/actions/workflows/python-tests.yml?query=branch%3Amaster
+.. |Dev Tests| image:: https://github.com/riggsd/guano-py/actions/workflows/python-tests.yml/badge.svg?branch=dev
+   :target: https://github.com/riggsd/guano-py/actions/workflows/python-tests.yml?query=branch%3Adev
 .. |Documentation Status| image:: https://readthedocs.org/projects/guano-py/badge/?version=latest
    :target: http://guano-py.readthedocs.io/en/latest/?badge=latest
