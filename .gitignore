@@ -5,6 +5,7 @@ build
 dist
 GUANO_BACKUP
 docs/_build
+test_guano.wav
 .venv*
 .env*
 .idea

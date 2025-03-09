@@ -16,7 +16,7 @@ Documentation for guano-py can be found at: http://guano-py.readthedocs.io
 Requirements
 ============
 
--  Python 2.7 or Python 3.3+
+- Python 3.6+
 
 
 Installation
@@ -37,7 +37,7 @@ locally in developer mode to hack on it yourself::
     $> cd guano-py
     $> python setup.py develop
 
-|Master Tests| |Dev Tests| |Documentation Status|
+Master:|Master Tests| Dev:|Dev Tests| |Documentation Status|
 
 
 API Usage

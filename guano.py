@@ -20,7 +20,7 @@ import struct
 import os.path
 import shutil
 from datetime import datetime, tzinfo, timedelta
-from contextlib import closing, nullcontext
+from contextlib import closing
 from tempfile import NamedTemporaryFile
 from collections import OrderedDict, namedtuple
 from base64 import standard_b64encode as base64encode
@@ -158,7 +158,7 @@ class GuanoFile(object):
     Anabat-format file or to a sidecar file, for example, by populating a `GuanoFile` object and
     then using the :func:`serialize()` method to produce correctly formatted UTF-8 encoded metadata.
 
-    :ivar str filename:  path to the file which this object represents, or `None` if a "new" file or file-like object
+    :ivar str filename:  path to the file which this object represents, or `None` if a "new" file
     :ivar bool strict_mode:  whether the GUANO parser is configured for strict or lenient parsing
     :ivar bytes wav_data:  the `data` subchunk of a .WAV file consisting of its actual audio data,
                            lazily-loaded and cached for performance
@@ -199,7 +199,13 @@ class GuanoFile(object):
         :raises ValueError:  if the specified file doesn't represent a valid .WAV or if its
                              existing GUANO metadata is broken
         """
-        self._file = file
+        if isinstance(file, basestring):
+            self.filename = file
+            self._file = None
+        else:
+            self.filename = file.name if hasattr(file, 'name') else None
+            self._file = file  # a file-like object
+
         self.strict_mode = strict
 
         self.wav_params = None
@@ -209,9 +215,7 @@ class GuanoFile(object):
         self._wav_data_offset = 0
         self._wav_data_size = 0
 
-        if file is not None:
-            if self.filename and not os.path.isfile(self.filename):
-                return
+        if self._file or (self.filename and os.path.isfile(self.filename)):
             self._load()
 
     def _coerce(self, key, value):
@@ -239,11 +243,7 @@ class GuanoFile(object):
 
     def _load(self):
         """Load the contents of our underlying .WAV file"""
-        if self.filename:
-            opener = open(self.filename, 'rb')
-        else:
-            opener = nullcontext(self._file)
-
+        opener = open(self.filename, 'rb') if self._file is None else nullcontext(self._file)
         with opener as f:
             # check filesize: seek to end of file and tell its byte offset
             f.seek(0, 2)
@@ -439,29 +439,12 @@ class GuanoFile(object):
         return md_bytes
 
     @property
-    def filename(self):
-        """Get the filename associated with this GuanoFile, if set.
-
-        Returns None when GuanoFile is a file-like object or is not tied to any underlying file"""
-        if isinstance(self._file, basestring):
-            return self._file
-        return None
-
-    @filename.setter
-    def filename(self, value):
-        """Set the filename for this GuanoFile. Set this before writing to a new file"""
-        if isinstance(value, basestring):
-            self._file = value
-        else:
-            raise ValueError("Filename must be a string")
-
-    @property
     def wav_data(self):
         """Actual audio data from the wav `data` chunk. Lazily loaded and cached."""
         if not self._wav_data_size:
             raise ValueError()
         if not self._wav_data:
-            opener = open(self.filename, 'rb') if self.filename else nullcontext(self._file)
+            opener = open(self.filename, 'rb') if self._file is None else nullcontext(self._file)
             with opener as f:
                 f.seek(self._wav_data_offset)
                 self._wav_data = f.read(self._wav_data_size)
@@ -529,6 +512,19 @@ class GuanoFile(object):
                 os.remove(backup_file)
             shutil.move(self.filename, backup_file)
         shutil.move(tempfile.name, self.filename)
+
+
+class nullcontext():
+    """Fake ContextManager for Python < 3.7 compatibility"""
+
+    def __init__(self, enter_result=None):
+        self.enter_result = enter_result
+
+    def __enter__(self):
+        return self.enter_result
+
+    def __exit__(self, *excinfo):
+        pass
 
 
 # This ugly hack prevents a warning if application-level code doesn't configure logging
