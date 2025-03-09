@@ -12,9 +12,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Older Python versions on Ubuntu 22.04
+          # Older Python versions
           - python-version: "3.6"
-            os: ubuntu-22.04
+            os: ubuntu-20.04
           - python-version: "3.7"
             os: ubuntu-22.04
 
